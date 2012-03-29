@@ -1,6 +1,8 @@
 import imaplib
 import email
+import os
 import re
+import shutil
 import sys
 from optparse import OptionParser
 
@@ -38,25 +40,26 @@ from optparse import OptionParser
 
 class TransactionProcessor:
     """A transaction processor for QIF files."""
-    ASSETS = {
+    # TODO: replace qif accounts configurable file
+    assets = {
         "c": "Assets:Current:Cash",
         "n": "Assets:Current:Chequing",
         "r": "Assets:Current:Receivable",
         "s": "Assets:Current:Savings",
     }
-    LIABILITIES = {
+    liabilities = {
         "m": "Liabilities:Mastercard",
         "p": "Liabilities:Payable",
         "v": "Liabilities:Visa",
     }
-    REVENUES = {
+    revenues = {
         "ear": "Income:Earnings",
         "gif": "Income:Gifts",
         "int": "Income:Interest",
         "mis": "Income:Miscellaneous",
         "por": "Income:Portfolio",
     }
-    EXPENSES = {
+    expenses = {
         "gas":  "Expenses:Auto:Gas",
         "ins":  "Expenses:Auto:Insurance",
         "amai": "Expenses:Auto:Maintenance & Fees",
@@ -75,22 +78,56 @@ class TransactionProcessor:
         "sup":  "Expenses:Upkeep:Supplies",
         "pho":  "Expenses:Utilities:Phone",
     }
+    # TODO: replace hardcoded files with configuration file
+    path_working = os.getcwd()
+    path_default = '{0}/default/'.format(path_working)
+    path_transactions = '{0}/transactions/'.format(path_working)
+    file_cash = 'cash.qif'
+    file_chequing = 'chequing.qif'
+    file_mastercard = 'mastercard.qif'
+    file_payable = 'payable.qif'
+    file_receivable = 'receivable.qif'
+    file_visa = 'visa.qif'
+
 
     def isMultipleMainAccounts(self):
         """Returns if the transaction involves two main accounts."""
-        return ((self.debit in self.ASSETS or self.debit in self.LIABILITIES) and
-               (self.credit in self.ASSETS or self.credit in self.LIABILITIES))
+        return ((self.debit in self.assets or self.debit in self.liabilities) and
+               (self.credit in self.assets or self.credit in self.liabilities))
 
     def isRevenue(self):
         """Returns if the transaction is a revenue."""
-        return self.credit in self.REVENUES
+        return self.credit in self.revenues
 
     def isExpense(self):
         """Returns if the transaction is an expense."""
-        return self.debit in self.EXPENSES
+        return self.debit in self.expenses
+
+
+    def checkForExistingFiles(self):
+        cash_exists = os.path.exists(self.path_transactions + self.file_cash)
+        chequing_exists = os.path.exists(self.path_transactions + self.file_chequing)
+        mastercard_exists = os.path.exists(self.path_transactions + self.file_mastercard)
+        payable_exists = os.path.exists(self.path_transactions + self.file_payable)
+        receivable_exists = os.path.exists(self.path_transactions + self.file_receivable)
+        visa_exists = os.path.exists(self.path_transactions + self.file_visa)
+        if not cash_exists:
+            shutil.copyfile(self.path_default + self.file_cash, self.path_transactions + self.file_cash)
+        if not chequing_exists:
+            shutil.copyfile(self.path_default + self.file_chequing, self.path_transactions + self.file_chequing)
+        if not mastercard_exists:
+            shutil.copyfile(self.path_default + self.file_mastercard, self.path_transactions + self.file_mastercard)
+        if not payable_exists:
+            shutil.copyfile(self.path_default + self.file_payable, self.path_transactions + self.file_payable)
+        if not receivable_exists:
+            shutil.copyfile(self.path_default + self.file_receivable, self.path_transactions + self.file_visa)
+        if not visa_exists:
+            shutil.copyfile(self.path_default + self.file_visa, self.path_transactions + self.file_visa)
+
 
     def Process(self):
         """Processes a transaction into the QIF format."""
+        self.checkForExistingFiles()
         if self.isMultipleMainAccounts():
             pass
         elif self.isRevenue():
