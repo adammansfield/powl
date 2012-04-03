@@ -4,7 +4,12 @@ import os
 import re
 import shutil
 import sys
+import time
 from optparse import OptionParser
+
+path_default = '{0}/default/'.format(os.getcwd())
+path_logs = '{0}/logs/'.format(os.getcwd())
+path_transactions = '{0}/transactions/'.format(os.getcwd())
 
 class TransactionProcessor:
     """A transaction processor for QIF files."""
@@ -54,8 +59,6 @@ class TransactionProcessor:
         "sup":  "Expenses:Upkeep:Supplies",
         "pho":  "Expenses:Utilities:Phone",
     }
-    path_default = '{0}/default/'.format(os.getcwd())
-    path_transactions = '{0}/transactions/'.format(os.getcwd())
 
 
     def isMultipleAccounts(self):
@@ -82,10 +85,10 @@ class TransactionProcessor:
         """Copies default QIF files if missing."""
         files = self.transaction_files.itervalues()
         for file in files:
-            custom_file = '{0}/{1}'.format(self.path_transactions, file)
+            custom_file = '{0}/{1}'.format(path_transactions, file)
             exists = os.path.exists(custom_file)
             if not exists:
-                default_file = '{0}/{1}'.format(self.path_default, file)
+                default_file = '{0}/{1}'.format(path_default, file)
                 shutil.copyfile(default_file, custom_file)
 
 
@@ -97,7 +100,16 @@ class TransactionProcessor:
         elif self.isAnAccount():
             pass
         else:
-            pass
+            file_log = path_logs + '/' + time.strftime('%Y-%m-%d', time.localtime()) + '.log'
+            log = open(file_log, 'a')
+            log_time = time.strftime('[%H:%M]', time.localtime())
+            log_debit = 'Debit: ' + self.debit
+            log_credit = 'Credit: ' + self.credit
+            log_amount = 'Amount: ' + self.amount
+            log_memo = 'Memo: ' + self.memo
+            message = '{0} {1} {2} {3} {4} {5}'.format(log_time, log_debit, log_credit, log_amount, log_memo, os.linesep)
+            log.write(message)
+            log.close()
         self.amount = 'T-{0}'.format(self.amount)
         data = '{0}'.format(self.amount)
 
