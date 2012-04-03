@@ -8,7 +8,7 @@ from optparse import OptionParser
 
 class TransactionProcessor:
     """A transaction processor for QIF files."""
-    # TODO: replace qif accounts configurable file
+    # TODO: replace qif accounts and files with a configurable file
     transaction_files = {
         "c": "cash.qif",
         "n": "chequing.qif",
@@ -58,10 +58,16 @@ class TransactionProcessor:
     path_transactions = '{0}/transactions/'.format(os.getcwd())
 
 
-    def isMultipleMainAccounts(self):
+    def isMultipleAccounts(self):
         """Returns if the transaction involves two main accounts."""
-        return ((self.debit in self.assets or self.debit in self.liabilities) and
-               (self.credit in self.assets or self.credit in self.liabilities))
+        files = self.transaction_files.itervalues()
+        return self.debit in files and self.credit in files
+
+    def isAnAccount(self):
+        """Returns if the transaction involves at least one main account."""
+        files = self.transaction_files.itervalues()
+        return self.debit in files or self.credit in files
+
 
     def isRevenue(self):
         """Returns if the transaction is a revenue."""
@@ -86,11 +92,9 @@ class TransactionProcessor:
     def Process(self):
         """Processes a transaction into the QIF format."""
         self.checkForExistingFiles()
-        if self.isMultipleMainAccounts():
+        if self.isMultipleAccounts():
             pass
-        elif self.isRevenue():
-            pass
-        elif self.isExpense():
+        elif self.isAnAccount():
             pass
         else:
             pass
