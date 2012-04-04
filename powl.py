@@ -7,14 +7,14 @@ import sys
 import time
 from optparse import OptionParser
 
-path_default = '{0}/default/'.format(os.getcwd())
-path_logs = '{0}/logs/'.format(os.getcwd())
-path_transactions = '{0}/transactions/'.format(os.getcwd())
+path_default = os.getcwd() + os.path.sep + 'default'
+path_logs = os.getcwd() + os.path.sep + 'logs'
+path_transactions = os.getcwd() + os.path.sep + 'transactions'
 
 class TransactionProcessor:
     """A transaction processor for QIF files."""
     # TODO: replace qif accounts and files with a configurable file
-    transaction_files = {
+    filenames = {
         "c": "cash.qif",
         "n": "chequing.qif",
         "m": "mastercard.qif",
@@ -22,83 +22,53 @@ class TransactionProcessor:
         "r": "receivable.qif",
         "v": "visa.qif",
     }
-    assets = {
+    accounts = {
         "c": "Assets:Current:Cash",
         "n": "Assets:Current:Chequing",
         "r": "Assets:Current:Receivable",
         "s": "Assets:Current:Savings",
-    }
-    liabilities = {
         "m": "Liabilities:Mastercard",
         "p": "Liabilities:Payable",
         "v": "Liabilities:Visa",
+        "ear": "Revenue:Earnings",
+        "gif": "Revenue:Gifts",
+        "int": "Revenue:Interest",
+        "mis": "Revenue:Miscellaneous",
+        "por": "Revenue:Portfolio",
+        "gas": "Expenses:Auto:Gas",
+        "ins": "Expenses:Auto:Insurance",
+        "mai": "Expenses:Auto:Maintenance & Fees",
+        "clo": "Expenses:Commodities:Clothing",
+        "com": "Expenses:Commodities:Computer",
+        "woe": "Expenses:Commodities:Workout Equipment",
+        "din": "Expenses:Entertainment:Dining",
+        "gam": "Expenses:Entertainment:Games",
+        "ent": "Expenses:Entertainment:General",
+        "out": "Expenses:Entertainment:Outtings",
+        "mis": "Expenses:Miscellanous:General",
+        "gif": "Expenses:Miscellanous:Gifts",
+        "los": "Expenses:Miscellanous:Loss",
+        "eye": "Expenses:Upkeep:Eyewear",
+        "nut": "Expenses:Upkeep:Nutrition",
+        "sup": "Expenses:Upkeep:Supplies",
+        "pho": "Expenses:Utilities:Phone",
     }
-    revenues = {
-        "ear": "Income:Earnings",
-        "gif": "Income:Gifts",
-        "int": "Income:Interest",
-        "mis": "Income:Miscellaneous",
-        "por": "Income:Portfolio",
-    }
-    expenses = {
-        "gas":  "Expenses:Auto:Gas",
-        "ins":  "Expenses:Auto:Insurance",
-        "amai": "Expenses:Auto:Maintenance & Fees",
-        "clo":  "Expenses:Commodities:Clothing",
-        "com":  "Expenses:Commodities:Computer",
-        "woe":  "Expenses:Commodities:Workout Equipment",
-        "din":  "Expenses:Entertainment:Dining",
-        "gam":  "Expenses:Entertainment:Games",
-        "ent":  "Expenses:Entertainment:General",
-        "out":  "Expenses:Entertainment:Outtings",
-        "mis":  "Expenses:Miscellanous:General",
-        "gif":  "Expenses:Miscellanous:Gifts",
-        "los":  "Expenses:Miscellanous:Loss",
-        "eye":  "Expenses:Upkeep:Eyewear",
-        "nut":  "Expenses:Upkeep:Nutrition",
-        "sup":  "Expenses:Upkeep:Supplies",
-        "pho":  "Expenses:Utilities:Phone",
-    }
-
-
-    def isMultipleAccounts(self):
-        """Returns if the transaction involves two main accounts."""
-        files = self.transaction_files.itervalues()
-        return self.debit in files and self.credit in files
-
-    def isAnAccount(self):
-        """Returns if the transaction involves at least one main account."""
-        files = self.transaction_files.itervalues()
-        return self.debit in files or self.credit in files
-
-
-    def isRevenue(self):
-        """Returns if the transaction is a revenue."""
-        return self.credit in self.revenues
-
-    def isExpense(self):
-        """Returns if the transaction is an expense."""
-        return self.debit in self.expenses
-
 
     def checkForExistingFiles(self):
-        """Copies default QIF files if missing."""
-        files = self.transaction_files.itervalues()
-        for file in files:
-            custom_file = '{0}/{1}'.format(path_transactions, file)
-            exists = os.path.exists(custom_file)
-            if not exists:
-                default_file = '{0}/{1}'.format(path_default, file)
+        """Copies default QIF files if custom files are missing."""
+        for filename in self.filenames.itervalues():
+            custom_file = path_transactions + os.path.sep + filename
+            if not os.path.isfile(custom_file):
+                default_file = path_default + os.path.sep + filename
                 shutil.copyfile(default_file, custom_file)
-
 
     def Process(self):
         """Processes a transaction into the QIF format."""
         self.checkForExistingFiles()
-        if self.isMultipleAccounts():
-            pass
-        elif self.isAnAccount():
-            pass
+        if self.debit in self.filenames:
+            file = self.files.get(self.debit)
+        elif self.credit in self.filenames:
+            file = self.files.get(self.credit)
         else:
             file_log = path_logs + '/' + time.strftime('%Y-%m-%d', time.localtime()) + '.log'
             log = open(file_log, 'a')
