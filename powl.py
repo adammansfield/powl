@@ -1,5 +1,7 @@
+import ConfigParser
 import imaplib
 import email
+import logging
 import os
 import re
 import shutil
@@ -7,12 +9,23 @@ import sys
 import time
 import optparse
 from transaction import TransactionProcessor
+logging.basicConfig(level=logging.DEBUG,
+                    format='[%(asctime)s %(levelname)s] %(message)s',
+                    datefmt='%H:%M')
 
 class Powl:
     path_default = os.getcwd() + os.sep + 'default'
     path_logs = os.getcwd() + os.sep + 'logs'
     path_transactions = os.getcwd() + os.sep + 'transactions'
 
+    def read_inbox(self):
+        config = ConfigParser.ConfigParser()
+        config.readfp(open('config.cfg'))
+        address = config.get('Email','address')
+        password = config.get('Email','password')
+        logging.debug('%s %s', address, password)
+        pass
+        
     def parse_message(self, message):
         """Parses a message and does a corresponding action."""
         # TODO: parse date from email
@@ -41,11 +54,12 @@ class Powl:
                                  memo)
             
     def main(self):
-        self.transaction = TransactionProcessor(self.path_default,
-                                                self.path_transactions,
-                                                self.path_logs)
-        message = "transaction -d din -c m -a 5.65 -m \"lunch at subway\""
-        self.parse_message(message)
+        self.read_inbox()
+        #self.transaction = TransactionProcessor(self.path_default,
+        #                                        self.path_transactions,
+        #                                        self.path_logs)
+        #message = "transaction -d din -c m -a 5.65 -m \"lunch at subway\""
+        #self.parse_message(message)
     
 if __name__ == '__main__':
     Powl().main()
