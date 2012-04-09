@@ -10,7 +10,7 @@ import time
 import optparse
 import TransactionProcessor
 logging.basicConfig(level=logging.DEBUG,
-                    format='[%(asctime)s %(levelname)s] %(message)s',
+                    format='[%(asctime)s] %(levelname)s - %(message)s',
                     datefmt='%H:%M')
 
 class Powl:
@@ -55,6 +55,7 @@ class Powl:
     def parse_transaction(self, params, date):
         """Separates transaction data and processes the transaction."""
         for param in params:
+            param = param.strip()
             if re.match('d', param):
                 debit = param.replace('d ','')
             elif re.match('c', param):
