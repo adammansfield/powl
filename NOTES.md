@@ -17,6 +17,14 @@ L<Account>    //other account (debit or credit)
 M<Memo>       //memo
 ```
 
+__Account Types:__
+
+```
+Bank:   Bank
+Cash:   Cash
+CCard:  Credit Card
+```
+
 __Example:__
 
 ```
