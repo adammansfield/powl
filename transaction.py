@@ -54,9 +54,9 @@ class TransactionProcessor:
     def check_for_existing_files(self):
         """Copies default QIF files if custom files are missing."""
         for filename in self.filenames.itervalues():
-            custom_file = self.transaction_path + os.path.sep + filename
+            custom_file = self.transaction_path + os.sep + filename
             if not os.path.isfile(custom_file):
-                default_file = self.default_path + os.path.sep + filename
+                default_file = self.default_path + os.sep + filename
                 if os.path.isfile(default_file):
                     shutil.copyfile(default_file, custom_file)
 
@@ -71,7 +71,7 @@ class TransactionProcessor:
                    " Credit: " + credit +
                    " Amount: " + amount +
                    " Memo: " + memo + os.linesep)
-        logfile = powl.Paths.logs + os.path.sep + logdate + '.log'
+        logfile = powl.Paths.logs + os.sep + logdate + '.log'
         log = open(logfile, 'a')
         log.write(message)
         log.close()
@@ -99,7 +99,7 @@ class TransactionProcessor:
         return filename, transaction
 
     def append_transaction_to_file(self, filename, transaction):
-        filename = self.transaction_path + os.path.sep + filename 
+        filename = self.transaction_path + os.sep + filename 
         file = open(filename, 'a')
         file.write(transaction)
         file.close()

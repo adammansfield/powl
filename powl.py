@@ -9,9 +9,9 @@ import optparse
 from transaction import TransactionProcessor
 
 class Powl:
-    path_default = os.getcwd() + os.path.sep + 'default'
-    path_logs = os.getcwd() + os.path.sep + 'logs'
-    path_transactions = os.getcwd() + os.path.sep + 'transactions'
+    path_default = os.getcwd() + os.sep + 'default'
+    path_logs = os.getcwd() + os.sep + 'logs'
+    path_transactions = os.getcwd() + os.sep + 'transactions'
 
     def parse_message(self, message):
         """Parses a message and does a corresponding action."""
