@@ -1,10 +1,7 @@
-import logging
 import os
 import shutil
 import time
-logging.basicConfig(level=logging.DEBUG,
-                    format='[%(asctime)s] %(levelname)s - %(message)s',
-                    datefmt='%H:%M')
+import logger
 
 class TransactionProcessor:
     """A transaction processor for QIF files."""
@@ -66,6 +63,7 @@ class TransactionProcessor:
 
     def log_error(self, date, debit, credit, amount, memo):
         """Logs the transaction error."""
+        # TODO: use logger module 
         logtime = time.strftime('[%H:%M]', time.localtime())
         logdate = time.strftime('%Y-%m-%d', time.localtime())  
         transactiondate = time.strftime('%m/%d/%Y', date)
@@ -92,10 +90,8 @@ class TransactionProcessor:
         else:
             filename = self.filenames.get(credit)
             transfer = accounts.get(debit)
-        logging.debug("Before: %s", amount)
         if debit in self.expenses:
             amount = -float(amount)
-        logging.debug("After: %s", amount)
         date = time.strftime('%m/%d/%Y', date)
         transaction = ("D{0}{1}".format(date, os.linesep) + 
                        "T{0}{1}".format(amount, os.linesep) +
@@ -109,7 +105,10 @@ class TransactionProcessor:
         file = open(filename, 'a')
         file.write(transaction)
         file.close()
-        logging.debug('%s%s%s', filename, os.linesep, transaction)
+        logger.debug('TRANSACTION APPEND%s%s%s%s', os.linesep,
+                                                   filename,
+                                                   os.linesep,
+                                                   transaction)
 
     def Process(self, date, debit, credit, amount, memo):
         """Processes a transaction into the QIF format."""

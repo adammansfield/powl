@@ -1,17 +1,14 @@
 import ConfigParser
 import imaplib
 import email
-import logging
 import os
 import re
 import shutil
 import sys
 import time
 import optparse
+import logger
 import TransactionProcessor
-logging.basicConfig(level=logging.DEBUG,
-                    format='[%(asctime)s] %(levelname)s - %(message)s',
-                    datefmt='%H:%M')
 
 class Powl:
     """Class for processing emails to do a corresponding action."""
@@ -29,7 +26,7 @@ class Powl:
                 if part.get_content_type() == 'text/html':
                     body = part.get_payload()
                     message = self.strip_message_markup(body)
-                    logging.debug('EMAIL: %s - %s', message, date)
+                    logger.debug('EMAIL - %s', message.strip())
                     self.parse_message(message, date)
 
     def strip_message_markup(self, message):
@@ -50,7 +47,7 @@ class Powl:
             self.parse_transaction(params, date)
         else:
             # TODO: append to miscellaneous file
-            logging.debug('No match: %s', message)
+            logger.debug('MISCELLANEOUS - %s', message)
 
     def parse_transaction(self, params, date):
         """Separates transaction data and processes the transaction."""
@@ -65,10 +62,8 @@ class Powl:
             elif re.match('m', param):
                 memo = param.replace('m ','')
                 memo = memo.replace("\"", '')
-        log = 'Debit: %s Credit: %s Amount: %s Memo: %s'
-        logging.debug(log, debit, credit, amount, memo)
+        logger.debug('TRANSACTION - %s  %s  %s  %s', debit, credit, amount, memo)
         self.transaction.Process(date, debit, credit, amount, memo)
-    
 
     # Initialization
     # --------------
@@ -88,7 +83,7 @@ class Powl:
         self.path_default = workingdir + config.get('Paths', 'default')
         self.path_logs = workingdir + config.get('Paths', 'logs')
         self.path_transactions = workingdir + config.get('Paths', 'transactions')
-        logging.debug('%s %s %s', self.address, self.password, self.mailbox)
+        logger.debug('%s %s %s', self.address, self.password, self.mailbox)
 
     def initialize_modules(self):
         """Intializes modules used for doing various actions."""
