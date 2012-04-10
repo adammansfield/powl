@@ -21,6 +21,7 @@ class Powl:
     # ----------------
     def process_inbox(self):
         """Process a list of messages to be parsed."""
+        logger.info("PROCESSING INBOX")
         search_response, email_ids = self.imap.search(None, "(Unseen)")
         for email_id in email_ids[0].split():
             fetch_response, data = self.imap.fetch(email_id, "(RFC822)")
@@ -30,7 +31,7 @@ class Powl:
                 if part.get_content_type() == 'text/html':
                     body = part.get_payload()
                     message = self.strip_message_markup(body)
-                    logger.debug('EMAIL - %s', message.strip())
+                    logger.debug('EMAIL   %s', message.strip())
                     self.parse_message(message, date)
 
     def strip_message_markup(self, message):
@@ -51,7 +52,7 @@ class Powl:
             self.parse_transaction(params, date)
         else:
             # TODO: append to miscellaneous file
-            logger.debug('MISCELLANEOUS - %s', message)
+            logger.debug('MISC    %s', message)
 
     def parse_transaction(self, params, date):
         """Separate transaction data to pass onto processing."""
@@ -66,7 +67,6 @@ class Powl:
             elif re.match('m', param):
                 memo = param.replace('m ','')
                 memo = memo.replace("\"", '')
-        logger.debug('TRANSACTION - %s  %s  %s  %s', debit, credit, amount, memo)
         self.transaction.Process(date, debit, credit, amount, memo)
 
     # Initialization
@@ -88,7 +88,6 @@ class Powl:
         self.path_default = workingdir + config.get('Paths', 'default')
         self.path_logs = workingdir + config.get('Paths', 'logs')
         self.path_transactions = workingdir + config.get('Paths', 'transactions')
-        logger.debug('%s %s %s', self.address, self.password, self.mailbox)
 
     def initialize_modules(self):
         """Intialize modules used for doing various actions."""

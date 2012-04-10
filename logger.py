@@ -5,7 +5,7 @@ import time
 logger = logging.getLogger()
 level = logging.DEBUG
 logger.setLevel(level)
-format = '[%(asctime)s] %(levelname)s\t%(message)s'
+format = '%(asctime)s\t%(levelname)s\t%(message)s'
 dateformat = '%H:%M'
 formatter = logging.Formatter(format, dateformat)
 
