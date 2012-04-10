@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+"""Process an email inbox to do a correpsonding action with each message."""
+# Builtin
 import ConfigParser
 import imaplib
 import email
@@ -7,16 +10,17 @@ import shutil
 import sys
 import time
 import optparse
+# Powl
 import logger
 import TransactionProcessor
+__version__ = "0.1.01"
 
 class Powl:
     """Class for processing emails to do a corresponding action."""
-
     # Email Processing
     # ----------------
     def process_inbox(self):
-        """Processes a list of messages to pass onto parsing."""
+        """Process a list of messages to be parsed."""
         search_response, email_ids = self.imap.search(None, "(Unseen)")
         for email_id in email_ids[0].split():
             fetch_response, data = self.imap.fetch(email_id, "(RFC822)")
@@ -30,7 +34,7 @@ class Powl:
                     self.parse_message(message, date)
 
     def strip_message_markup(self, message):
-        """Returns email message striped of markup."""
+        """Return message striped of markup."""
         retval = message
         retval = retval.replace('<P>','')
         retval = retval.replace('</P>','')
@@ -40,7 +44,7 @@ class Powl:
     # Parsing
     # -------
     def parse_message(self, message, date):
-        """Parses a message and does a corresponding action."""
+        """Parse a message and determine its specified action."""
         # TODO: parse date from email
         params = re.split(' -', message)
         if params[0].strip() == 'transaction':
@@ -50,7 +54,7 @@ class Powl:
             logger.debug('MISCELLANEOUS - %s', message)
 
     def parse_transaction(self, params, date):
-        """Separates transaction data and processes the transaction."""
+        """Separate transaction data to pass onto processing."""
         for param in params:
             param = param.strip()
             if re.match('d', param):
@@ -68,12 +72,13 @@ class Powl:
     # Initialization
     # --------------
     def main(self):
+        """Setup and process email inbox."""
         self.load_config()
         self.initialize_modules()
         self.process_inbox()
 
     def load_config(self):
-        """Reads custom config file and loads settings."""
+        """Load custom config file settings."""
         config = ConfigParser.ConfigParser()
         config.readfp(open('config.cfg'))
         self.address = config.get('Email','address')
@@ -86,13 +91,14 @@ class Powl:
         logger.debug('%s %s %s', self.address, self.password, self.mailbox)
 
     def initialize_modules(self):
-        """Intializes modules used for doing various actions."""
+        """Intialize modules used for doing various actions."""
         self.imap = imaplib.IMAP4_SSL("imap.gmail.com")
         self.imap.login(self.address, self.password)
         self.imap.select(self.mailbox)
-        self.transaction = TransactionProcessor.TransactionProcessor(self.path_default,
-                                                                     self.path_transactions,
-                                                                     self.path_logs)
+        self.transaction = TransactionProcessor. \
+                           TransactionProcessor(self.path_default,
+                                                self.path_transactions,
+                                                self.path_logs)
     
 if __name__ == '__main__':
     Powl().main()
