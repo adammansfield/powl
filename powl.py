@@ -51,8 +51,12 @@ class Powl:
         if params[0].strip() == 'transaction':
             self.parse_transaction(params, date)
         else:
-            # TODO: append to miscellaneous file
-            logger.debug('MISC    %s', message)
+            message = message + os.linesep
+            filename = self.path_miscellaneous + os.sep + 'misc.txt'
+            file = open(filename, 'a')
+            file.write(message)
+            file.close()
+            logger.info('MISC    %s', message)
 
     def parse_transaction(self, params, date):
         """Separate transaction data to pass onto processing."""
@@ -88,6 +92,7 @@ class Powl:
         self.path_default = workingdir + config.get('Paths', 'default')
         self.path_logs = workingdir + config.get('Paths', 'logs')
         self.path_transactions = workingdir + config.get('Paths', 'transactions')
+        self.path_miscellaneous = workingdir + config.get('Paths', 'miscellaneous')
 
     def initialize_modules(self):
         """Intialize modules used for doing various actions."""
