@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 """Process an email inbox to do a correpsonding action with each message."""
-# Builtin
 import ConfigParser
 import imaplib
 import email
@@ -10,15 +9,12 @@ import shutil
 import sys
 import time
 import optparse
-# Powl
 import logger
 import TransactionProcessor
-__version__ = "0.1.01"
 
 class Powl:
     """Class for processing emails to do a corresponding action."""
     # Email Processing
-    # ----------------
     def process_inbox(self):
         """Process a list of messages to be parsed."""
         logger.info("PROCESSING INBOX")
@@ -42,24 +38,33 @@ class Powl:
         retval = retval.replace('=0A',' ')
         return retval
 
-    # Parsing
-    # -------
     def parse_message(self, message, date):
         """Parse a message and determine its specified action."""
         # TODO: parse date from email
-        params = re.split(' -', message)
-        if params[0].strip() == 'transaction':
-            self.parse_transaction(params, date)
+        action, data = message.split(' ',1)
+        if action == 'transaction':
+            self.process_transaction(data, date)
+        elif action == 'todo':
+            self.process_todo(data, date)
         else:
-            message = message + os.linesep
-            filename = self.path_miscellaneous + os.sep + 'misc.txt'
-            file = open(filename, 'a')
-            file.write(message)
-            file.close()
-            logger.info('MISC    %s', message)
+            self.process_miscellaneous(data, date)
 
-    def parse_transaction(self, params, date):
+    # Action Processing
+    def process_miscellaneous(self, data, date):
+        """Write miscellaneous message to file."""
+        filename = self.path_miscellaneous + os.sep + 'miscellaneous.txt'
+        file = open(filename, 'a')
+        file.write(data)
+        file.close()
+        logger.info('MISC\t%s', data)
+
+    def process_todo(self, task, date):
+        """Send task to toodledo."""
+        pass
+        
+    def process_transaction(self, params, date):
         """Separate transaction data to pass onto processing."""
+        params = re.split(' -', params)
         for param in params:
             param = param.strip()
             if re.match('d', param):
@@ -74,7 +79,6 @@ class Powl:
         self.transaction.Process(date, debit, credit, amount, memo)
 
     # Initialization
-    # --------------
     def main(self):
         """Setup and process email inbox."""
         self.load_config()
