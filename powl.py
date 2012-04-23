@@ -3,6 +3,7 @@
 import ConfigParser
 import imaplib
 import email
+import logging
 import os
 import re
 import shutil
@@ -16,9 +17,12 @@ class Powl:
     """Class for processing emails to do a corresponding action."""
     # Email Processing
     def process_inbox(self):
-        """Process a list of messages to be parsed."""
-        logger.info("PROCESSING INBOX")
+        """Parse through an inbox of emails."""
+        self.imap = imaplib.IMAP4_SSL("imap.gmail.com")
+        self.imap.login(self.address, self.password)
+        self.imap.select(self.mailbox)
         search_response, email_ids = self.imap.search(None, "(Unseen)")
+        self.log.info("PROCESSING INBOX")
         for email_id in email_ids[0].split():
             fetch_response, data = self.imap.fetch(email_id, "(RFC822)")
             mail = email.message_from_string(data[0][1])
@@ -27,7 +31,7 @@ class Powl:
                 if part.get_content_type() == 'text/html':
                     body = part.get_payload()
                     message = self.strip_message_markup(body)
-                    logger.debug('EMAIL   %s', message.strip())
+                    self.log.debug('EMAIL   %s', message.strip())
                     self.parse_message(message, date)
 
     def strip_message_markup(self, message):
@@ -56,7 +60,7 @@ class Powl:
         file = open(filename, 'a')
         file.write(data)
         file.close()
-        logger.info('MISC\t%s', data)
+        self.log.info('MISC\t%s', data)
 
     def process_todo(self, task, date):
         """Send task to toodledo."""
@@ -100,9 +104,7 @@ class Powl:
 
     def initialize_modules(self):
         """Intialize modules used for doing various actions."""
-        self.imap = imaplib.IMAP4_SSL("imap.gmail.com")
-        self.imap.login(self.address, self.password)
-        self.imap.select(self.mailbox)
+        self.log = logger.Logger(logging.DEBUG, self.path_logs)
         self.transaction = TransactionProcessor. \
                            TransactionProcessor(self.path_default,
                                                 self.path_transactions,
