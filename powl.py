@@ -40,6 +40,7 @@ class Powl:
         retval = retval.replace('<P>','')
         retval = retval.replace('</P>','')
         retval = retval.replace('=0A',' ')
+        retval = retval.replace('&amp;','&')
         return retval
 
     def parse_message(self, message, date):
