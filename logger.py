@@ -27,6 +27,7 @@ class Logger:
 
     def __init__(self, level, filedir):
         """Initialize the file and stream handlers."""
+        # TODO: restructure so if handlers are set do not set again
         self.logger = logging.getLogger()
         self.logger.setLevel(level)
         format = '%(asctime)s\t%(levelname)s\t%(message)s'
