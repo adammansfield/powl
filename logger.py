@@ -25,21 +25,30 @@ class Logger:
         """Uses the predefined logger to log a warning message."""
         self.logger.warning(message, *args, **kwargs)
 
-    def __init__(self, level, filedir):
-        """Initialize the file and stream handlers."""
-        # TODO: restructure so if handlers are set do not set again
-        self.logger = logging.getLogger()
-        self.logger.setLevel(level)
-        format = '%(asctime)s\t%(levelname)s\t%(message)s'
-        dateformat = '%H:%M'
-        formatter = logging.Formatter(format, dateformat)
+    def set_file_handler(self, filedir):
+        """Set file to which to direct log messages."""
         filename = time.strftime('%Y-%m-%d', time.localtime()) + '.log'
         file = filedir + os.sep + filename
-        filehandler = logging.FileHandler(file)
-        filehandler.setLevel(level)
-        filehandler.setFormatter(formatter)
-        self.logger.addHandler(filehandler)
+        handler = logging.FileHandler(file)
+        handler.setLevel(self.level)
+        handler.setFormatter(self.formatter)
+        self.logger.addHandler(handler)
+
+    def set_stream_handler(self):
+        """Set level and format for the stream messages."""
         streamhandler = logging.StreamHandler()
-        streamhandler.setLevel(level)
-        streamhandler.setFormatter(formatter)
+        streamhandler.setLevel(self.level)
+        streamhandler.setFormatter(self.formatter)
         self.logger.addHandler(streamhandler)
+
+    def __init__(self, loggername="", filedir="", level=logging.DEBUG):
+        """Initialize the file and stream handlers."""
+        self.logger = logging.getLogger(loggername)
+        self.logger.setLevel(level)
+        logformat = '%(asctime)s\t%(levelname)s\t%(message)s'
+        dateformat = '%H:%M'
+        self.formatter = logging.Formatter(logformat, dateformat)
+        self.level = level
+        self.set_stream_handler()
+        if filedir != "":
+            self.set_file_handler(filedir)

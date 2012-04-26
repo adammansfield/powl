@@ -81,6 +81,7 @@ class Powl:
             elif re.match('m', param):
                 memo = param.replace('m ','')
                 memo = memo.replace("\"", '')
+                memo = memo.strip()
         self.transaction.Process(date, debit, credit, amount, memo)
 
     # Initialization
@@ -105,7 +106,7 @@ class Powl:
 
     def initialize_modules(self):
         """Intialize modules used for doing various actions."""
-        self.log = logger.Logger(logging.DEBUG, self.path_logs)
+        self.log = logger.Logger('Powl')
         self.transaction = TransactionProcessor. \
                            TransactionProcessor(self.path_default,
                                                 self.path_transactions,

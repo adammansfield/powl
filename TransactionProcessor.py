@@ -95,7 +95,7 @@ class TransactionProcessor:
             self.append_transaction_to_file(filename, transaction)
         else:
             self.notify_transaction_error()
-            #self.log_transaction_error(date, debit, credit, amount, memo)
+            self.log_transaction_error(date, debit, credit, amount, memo)
             
     def is_valid(self, debit, credit):
         """Return boolean if transaction is valid or not."""
@@ -125,7 +125,7 @@ class TransactionProcessor:
                        "L{0}{1}".format(transfer, os.linesep) +
                        "M{0}{1}".format(memo, os.linesep) +
                        "^{0}".format(os.linesep))
-        #self.log_transaction(date, filename, transfer, amount, memo)
+        self.log_transaction(date, filename, transfer, amount, memo)
         return filename, transaction
 
     def notify_transaction_error(self):
@@ -144,7 +144,7 @@ class TransactionProcessor:
                   "{0}transfer: {1}{2}".format(logindent, transfer, os.linesep) +
                   "{0}amount: {1}{2}".format(logindent, amount, os.linesep) +
                   "{0}memo: {1}{2}".format(logindent, memo, os.linesep))
-        #self.log.info(logmsg)
+        self.log.info(logmsg)
 
     def log_transaction_error(self, date, debit, credit, amount, memo):
         """Logs the transaction."""
@@ -156,13 +156,13 @@ class TransactionProcessor:
                   "{0}credit: {1}{2}".format(logindent, credit, os.linesep) +
                   "{0}amount: {1}{2}".format(logindent, amount, os.linesep) +
                   "{0}memo: {1}{2}".format(logindent, memo, os.linesep))
-        #self.log.error(logmsg)
+        self.log.error(logmsg)
 
     # Initialization
     # --------------
     def __init__(self, default_path, transaction_path, log_path):
         """Set the paths used for transaction files."""
         self.default_path = default_path
-        #self.log_path = log_path
+        self.log_path = log_path
         self.transaction_path = transaction_path
-        #self.log = logger.Logger(logging.DEBUG, #self.log_path)
+        self.log = logger.Logger("TransactionProcessor", self.log_path)
