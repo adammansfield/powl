@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Processing transaction data into the QIF format."""
+"""Process transaction data into the QIF format."""
 import logging
 import os
 import shutil
@@ -59,8 +59,7 @@ class TransactionProcessor:
                     revenues.items() +
                     expenses.items())
 
-    # File IO
-    # -------
+    # FILE IO
     def check_for_existing_files(self):
         """Copies default QIF files if custom files are missing."""
         for filename in self.filenames.itervalues():
@@ -77,63 +76,112 @@ class TransactionProcessor:
         file.write(transaction)
         file.close()
 
-    # Transaction Processing
-    # ----------------------
+    # TRANSACTION PROCESSING
     def Process(self, date, debit, credit, amount, memo):
-        """Process a transaction into the QIF format."""
-        valid_accounts = (debit in self.accounts and
-                          credit in self.accounts)
-        valid_files = (debit in self.filenames or
-                       credit in self.filenames)
-        if valid_accounts and valid_files:
-            filename, transaction = self.format_to_qif(date,
-                                                       debit,
-                                                       credit,
-                                                       amount,
-                                                       memo)
+        """Process a transaction into the QIF format and write to file."""
+        if self.valid_transaction(date, debit, credit, amount):
+            qif_date = self.qif_covert_date(date)
+            qif_filename = self.qif_convert_filename(debit, credit)
+            qif_transfer = self.qif_convert_transfer(debit, credit)
+            qif_amount = self.qif_convert_amount(debit, amount)
+            qif_memo = memo
+            qif_transaction = self.qif_format(qif_date,
+                                              qif_transfer,
+                                              qif_amount,
+                                              qif_memo)
             self.check_for_existing_files()
-            self.append_transaction_to_file(filename, transaction)
+            self.append_transaction_to_file(qif_filename, qif_transaction)
+            self.log_transaction(self,
+                                 qif_date,
+                                 qif_filename,
+                                 qif_transfer,
+                                 qif_amount,
+                                 qif_memo)
         else:
-            self.notify_transaction_error()
+            # TODO: return an error for powl.py to handle
             self.log_transaction_error(date, debit, credit, amount, memo)
-            
-    def is_valid(self, debit, credit):
-        """Return boolean if transaction is valid or not."""
+
+    # VALIDITY
+    def valid_accounts(self, debit, credit):
+        """Check if both accounts are valid."""
         if debit in self.accounts and credit in self.accounts:
-            is_account = True
+            return True
         else:
-            is_account = False
+            return False
+
+    def valid_amount(self, amount):
+        """Check if amount is valid."""
+        try:
+            float(amount)
+            return True
+        except ValueError:
+            return False
+
+    def valid_date(self, date):
+        """Check if date is valid."""
+        try:
+            date.tm_year
+            return True
+        except AttributeError:
+            return False
+
+    def valid_file(self, debit, credit):
+        """Check if one of the accounts is a file for qif."""
         if debit in self.filenames or credit in self.filenames:
-            is_file = True
+            return True
         else:
-            is_file = False
-        return is_account and is_file
+            return False
 
-    def format_to_qif(self, date, debit, credit, amount, memo):
-        """Formats transaction data into the QIF format for a specific file."""
-        if debit in self.filenames:
-            filename = self.filenames.get(debit)
-            transfer = self.accounts.get(credit)
-        else:
-            filename = self.filenames.get(credit)
-            transfer = self.accounts.get(debit)
+    def valid_transaction(self, date, debit, credit, amount):
+        """Check if the transaction is valid for qif formatting."""
+        valid_accounts = self.valid_accounts(debit, credit)
+        valid_amount = self.valid_amount(amount)
+        valid_date = self.valid_date(date)
+        valid_file = self.valid_file(debit, credit)
+        return valid_accounts and valid_amount and valid_date and valid_file
+
+    # QIF FORMATTING
+    def qif_format(self, date, transfer, amount, memo):
+        """Formats qif data into a transaction for a QIF file."""
+        fmt_date = 'D' + date
+        fmt_amount = 'T' + amount
+        fmt_transfer = 'L' + transfer
+        fmt_memo = 'M' + memo
+        fmt_sep = '^'
+        fmt_transaction = (fmt_date + os.linesep + 
+                           fmt_amount + os.linesep + 
+                           fmt_transfer + os.linesep + 
+                           fmt_memo + os.linesep + 
+                           fmt_sep + os.linesep)
+        return fmt_transaction
+
+    # QIF CONVERSION
+    def qif_convert_amount(self, debit, amount):
+        """Convert amount based on debit."""
         if debit in self.expenses:
-            amount = -float(amount)
-        date = time.strftime('%m/%d/%Y', date)
-        transaction = ("D{0}{1}".format(date, os.linesep) + 
-                       "T{0}{1}".format(amount, os.linesep) +
-                       "L{0}{1}".format(transfer, os.linesep) +
-                       "M{0}{1}".format(memo, os.linesep) +
-                       "^{0}".format(os.linesep))
-        self.log_transaction(date, filename, transfer, amount, memo)
-        return filename, transaction
+            return '-' + amount
+        else:
+            return amount
 
-    def notify_transaction_error(self):
-        # TODO: send email detailing the error
-        pass
+    def qif_convert_date(self, date):
+        """Convert struct_time to qif date format."""
+        return time.strftime('%m/%d/%Y', date)
 
-    # Logging
-    # -------
+    def qif_convert_filename(self, debit, credit):
+        """Convert filename based on debit and credit."""
+        if debit in self.filenames:
+            return self.filenames.get(debit)
+        else:
+            return self.filenames.get(credit)
+
+    def qif_convert_transfer(self, debit, credit):
+        """Convert transfer account based on debit and credit."""
+        if debit in self.filenames:
+            return self.accounts.get(credit)
+        else:
+            return self.accounts.get(debit)
+
+    # LOGGING
     def log_transaction(self, date, path, transfer, amount, memo):
         """Logs the transaction."""
         file = os.path.basename(path)
@@ -158,11 +206,11 @@ class TransactionProcessor:
                   "{0}memo: {1}{2}".format(logindent, memo, os.linesep))
         self.log.error(logmsg)
 
-    # Initialization
-    # --------------
-    def __init__(self, default_path, transaction_path, log_path):
+    # INITIALIZATION
+    def __init__(self, default_path="", transaction_path="", log_path=""):
         """Set the paths used for transaction files."""
         self.default_path = default_path
         self.log_path = log_path
         self.transaction_path = transaction_path
-        self.log = logger.Logger("TransactionProcessor", self.log_path)
+        if log_path != "":
+            self.log = logger.Logger("TransactionProcessor", self.log_path)

@@ -107,7 +107,7 @@ class Powl:
     def initialize_modules(self):
         """Intialize modules used for doing various actions."""
         self.log = logger.Logger('Powl')
-        self.transaction = TransactionProcessor. \
+        self.transaction = TransactionProcessor.\
                            TransactionProcessor(self.path_default,
                                                 self.path_transactions,
                                                 self.path_logs)

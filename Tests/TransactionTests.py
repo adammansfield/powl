@@ -88,6 +88,7 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     # CONVERSION
+    # TODO: expand conversion into separate tests
     def test_convert_date(self):
         """Test date conversion with samples."""
         datefmt='%Y-%m-%d'
