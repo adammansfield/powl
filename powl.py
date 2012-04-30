@@ -10,8 +10,8 @@ import shutil
 import sys
 import time
 import optparse
-import logger
-import TransactionProcessor
+from Logging import logger
+from Processors import TransactionProcessor
 
 class Powl:
     """Class for processing emails to do a corresponding action."""
