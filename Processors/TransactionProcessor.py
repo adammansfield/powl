@@ -121,7 +121,7 @@ class TransactionProcessor:
         try:
             time.mktime(date)
             return True
-        except (OverflowError, ValueError):
+        except (TypeError, OverflowError, ValueError):
             return False
 
 

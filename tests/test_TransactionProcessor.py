@@ -4,8 +4,7 @@ import os
 import sys
 import time
 import unittest
-sys.path.append(os.path.dirname(os.getcwd()))
-import TransactionProcessor
+from Processors import TransactionProcessor
 
 class TransactionTests(unittest.TestCase):
     """Class for testing transaction processing."""
