@@ -88,6 +88,7 @@ class Powl:
     def main(self):
         """Setup and process email inbox."""
         self.load_config()
+        self.check_for_existing_folders()
         self.initialize_modules()
         self.process_inbox()
 
@@ -100,9 +101,19 @@ class Powl:
         self.mailbox = config.get('Email', 'mailbox')
         workingdir = os.getcwd() + os.sep
         self.path_default = workingdir + config.get('Paths', 'default')
+        # TODO: make path_logs hardcoded
         self.path_logs = workingdir + config.get('Paths', 'logs')
         self.path_transactions = workingdir + config.get('Paths', 'transactions')
         self.path_miscellaneous = workingdir + config.get('Paths', 'miscellaneous')
+
+    def check_for_existing_folders(self):
+        """Check if folders exist and if not create them."""
+        if not os.path.exists(self.path_logs):
+            os.makedirs(self.path_logs)
+        if not os.path.exists(self.path_transactions):
+            os.makedirs(self.path_transactions)
+        if not os.path.exists(self.path_miscellaneous):
+            os.makedirs(self.path_miscellaneous)
 
     def initialize_modules(self):
         """Intialize modules used for doing various actions."""
