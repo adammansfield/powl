@@ -80,7 +80,7 @@ class TransactionProcessor:
     def Process(self, date, debit, credit, amount, memo):
         """Process a transaction into the QIF format and write to file."""
         if self.valid_transaction(date, debit, credit, amount):
-            qif_date = self.qif_covert_date(date)
+            qif_date = self.qif_convert_date(date)
             qif_filename = self.qif_convert_filename(debit, credit)
             qif_transfer = self.qif_convert_transfer(debit, credit)
             qif_amount = self.qif_convert_amount(debit, amount)
@@ -91,8 +91,7 @@ class TransactionProcessor:
                                               qif_memo)
             self.check_for_existing_files()
             self.append_transaction_to_file(qif_filename, qif_transaction)
-            self.log_transaction(self,
-                                 qif_date,
+            self.log_transaction(qif_date,
                                  qif_filename,
                                  qif_transfer,
                                  qif_amount,
@@ -120,10 +119,11 @@ class TransactionProcessor:
     def valid_date(self, date):
         """Check if date is valid."""
         try:
-            date.tm_year
+            time.mktime(date)
             return True
-        except AttributeError:
+        except (OverflowError, ValueError):
             return False
+
 
     def valid_file(self, debit, credit):
         """Check if one of the accounts is a file for qif."""
