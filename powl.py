@@ -90,7 +90,7 @@ class Powl:
         self.transaction.Process(date, debit, credit, amount, memo)
 
     # CONFIGURATION
-    def config_create(self):
+    def config_create_default(self):
         """Create a default config file."""
         default_config_data = textwrap.dedent("""\
             [Email]
@@ -107,14 +107,18 @@ class Powl:
         file.write(default_config_data)
         file.close()
 
-    def config_is_default(self):
-        """Check if the config has not been setup."""
+    def config_is_valid(self):
+        """Check if the config is valid."""
         config = ConfigParser.ConfigParser()
-        config.readfp(open('config.cfg'))
-        default_email = 'account@domain.com'
-        config_email = config.get('Email', 'address')
+        config.readfp(open(self.file_config))
+        email_account = config.get('Email', 'address')
+        if not email_account:
+            self.log.info('Config file is not valid. Please enter your information.')
+            return False
+        else:
+            return True
 
-    def load_config(self):
+    def config_load(self):
         """Load custom config file settings."""
         config = ConfigParser.ConfigParser()
         config.readfp(open('config.cfg'))
@@ -129,16 +133,27 @@ class Powl:
         self.path_miscellaneous = workingdir + config.get('Paths', 'miscellaneous')
 
     def config_setup(self):
+        """Setup configuration settings and return if successful."""
         if not os.path.isfile(self.file_config):
-            self.config_create()
+            self.config_create_default()
+            self.log.info('Created default config file. Please enter your information.')
+            return False
+        elif self.config_is_valid():
+            self.config_load()
+            return True
+        else:
+            return False
 
     # Initialization
     def main(self):
         """Setup and process email inbox."""
-        self.load_config()
-        self.check_for_existing_folders()
-        self.initialize_modules()
-        self.process_inbox()
+        # TODO: move check for folders up here
+        self.log = logger.Logger('Powl')
+        config_successful = self.config_setup()
+        if config_successful:
+            self.check_for_existing_folders()
+            self.initialize_modules()
+            self.process_inbox()
 
     def check_for_existing_folders(self):
         """Check if folders exist and if not create them."""
@@ -151,7 +166,6 @@ class Powl:
 
     def initialize_modules(self):
         """Intialize modules used for doing various actions."""
-        self.log = logger.Logger('Powl')
         self.transaction = TransactionProcessor.\
                            TransactionProcessor(self.path_default,
                                                 self.path_transactions,
