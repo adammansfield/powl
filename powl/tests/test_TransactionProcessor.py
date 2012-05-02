@@ -4,7 +4,7 @@ import os
 import sys
 import time
 import unittest
-from Processors import TransactionProcessor
+from powl.processors import TransactionProcessor
 
 class TransactionTests(unittest.TestCase):
     """Class for testing transaction processing."""

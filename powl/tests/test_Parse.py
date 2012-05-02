@@ -2,7 +2,7 @@
 import os
 import sys
 import unittest
-import powl
+from powl.config import config
 
 class ParseTest(unittest.TestCase):
 

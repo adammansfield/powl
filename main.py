@@ -11,8 +11,8 @@ import shutil
 import sys
 import textwrap
 import time
-from Logging import logger
-from Processors import TransactionProcessor
+from powl.logger import logger
+from powl.processors import TransactionProcessor
 
 class Powl:
     """Class for processing emails to do a corresponding action."""

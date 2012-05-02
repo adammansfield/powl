@@ -4,7 +4,7 @@ import logging
 import os
 import shutil
 import time
-from Logging import logger
+from powl.logger import logger
 
 class TransactionProcessor:
     """A transaction processor for QIF files."""
