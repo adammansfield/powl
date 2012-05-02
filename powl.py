@@ -1,20 +1,25 @@
 #!/usr/bin/env python
 """Process an email inbox to do a correpsonding action with each message."""
 import ConfigParser
-import imaplib
 import email
+import imaplib
 import logging
+import optparse
 import os
 import re
 import shutil
 import sys
+import textwrap
 import time
-import optparse
 from Logging import logger
 from Processors import TransactionProcessor
 
 class Powl:
     """Class for processing emails to do a corresponding action."""
+    
+    default_mailbox = 'inbox'
+    file_config = 'config.cfg'
+
     # Email Processing
     def process_inbox(self):
         """Parse through an inbox of emails."""
@@ -84,13 +89,30 @@ class Powl:
                 memo = memo.strip()
         self.transaction.Process(date, debit, credit, amount, memo)
 
-    # Initialization
-    def main(self):
-        """Setup and process email inbox."""
-        self.load_config()
-        self.check_for_existing_folders()
-        self.initialize_modules()
-        self.process_inbox()
+    # CONFIGURATION
+    def config_create(self):
+        """Create a default config file."""
+        default_config_data = textwrap.dedent("""\
+            [Email]
+            address=
+            password=
+            mailbox=
+            
+            [Paths]
+            default=default
+            logs=logs
+            transactions=transactions
+            miscellaneous=miscellaneous""")
+        file = open(self.file_config, 'a')
+        file.write(default_config_data)
+        file.close()
+
+    def config_is_default(self):
+        """Check if the config has not been setup."""
+        config = ConfigParser.ConfigParser()
+        config.readfp(open('config.cfg'))
+        default_email = 'account@domain.com'
+        config_email = config.get('Email', 'address')
 
     def load_config(self):
         """Load custom config file settings."""
@@ -105,6 +127,18 @@ class Powl:
         self.path_logs = workingdir + config.get('Paths', 'logs')
         self.path_transactions = workingdir + config.get('Paths', 'transactions')
         self.path_miscellaneous = workingdir + config.get('Paths', 'miscellaneous')
+
+    def config_setup(self):
+        if not os.path.isfile(self.file_config):
+            self.config_create()
+
+    # Initialization
+    def main(self):
+        """Setup and process email inbox."""
+        self.load_config()
+        self.check_for_existing_folders()
+        self.initialize_modules()
+        self.process_inbox()
 
     def check_for_existing_folders(self):
         """Check if folders exist and if not create them."""
