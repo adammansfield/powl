@@ -1,4 +1,2 @@
-logs/*
-miscellaneous/*
-transactions/*
+output/
 config.cfg
