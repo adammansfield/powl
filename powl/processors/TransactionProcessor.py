@@ -3,6 +3,7 @@
 import logging
 import os
 import shutil
+import textwrap
 import time
 from powl.logger import logger
 
@@ -67,16 +68,27 @@ class TransactionProcessor:
                     revenues.items() +
                     expenses.items())
 
-    # FILE IO
+    # FILE SYSTEM CHECKING
+    def check_filesystem_for_files(self):
+        """Check for and create missing files and folders."""
+        self.create_folder_if_missing()
+        self.create_files_if_missing()
+
+    def create_folder_if_missing(self):
+        """Create a transaction folder if it does not exist."""
+        if not os.path.isdir(self.transaction_dir):
+            os.makedirs(self.transaction_dir)
+
     def create_files_if_missing(self):
         """Create QIF files with headers if they do not exist."""
-        for account_key, filename in self.filenames.iteritems()
-            filepath = self.path_transaction + filename
+        for account_key, filename in self.filenames.iteritems():
+            filepath = self.transaction_dir + os.sep + filename
             if not os.path.isfile(filepath):
                 account_name = self.accounts.get(account_key)
                 account_type = self.account_types.get(account_key)
                 self.create_transaction_file(filepath, account_name, account_type)
 
+    # FILE APPENDING
     def append_to_file(self, filepath, data):
         file = open(filepath, 'a')
         file.write(data)
@@ -89,7 +101,7 @@ class TransactionProcessor:
 
     def append_transaction_to_file(self, filename, transaction):
         """Append a formatted transaction to the specified file."""
-        filepath = self.transaction_path + os.sep + filename 
+        filepath = self.transaction_dir + os.sep + filename 
         self.append_to_file(filepath, transaction)
 
     # TRANSACTION PROCESSING
@@ -105,7 +117,7 @@ class TransactionProcessor:
                                                           qif_transfer,
                                                           qif_amount,
                                                           qif_memo)
-            self.check_for_existing_files()
+            self.check_filesystem_for_files()
             self.append_transaction_to_file(qif_filename, qif_transaction)
             self.log_transaction(qif_date,
                                  qif_filename,
@@ -211,12 +223,12 @@ class TransactionProcessor:
     # LOGGING
     def log_transaction(self, date, path, transfer, amount, memo):
         """Logs the transaction."""
-        file = os.path.basename(path)
+        filename = os.path.basename(path)
         logindent = '\t\t\t\t  '
         # TODO: use textwrap.dedent
         logmsg = ("TRANSACTION{0}".format(os.linesep) +
                   "{0}date: {1}{2}".format(logindent, date, os.linesep) +
-                  "{0}file: {1}{2}".format(logindent, file, os.linesep) +
+                  "{0}file: {1}{2}".format(logindent, filename, os.linesep) +
                   "{0}transfer: {1}{2}".format(logindent, transfer, os.linesep) +
                   "{0}amount: {1}{2}".format(logindent, amount, os.linesep) +
                   "{0}memo: {1}{2}".format(logindent, memo, os.linesep))
@@ -236,10 +248,11 @@ class TransactionProcessor:
         self.log.error(logmsg)
 
     # INITIALIZATION
-    def __init__(self, path_default="", transaction_path="", path_log=""):
+    def __init__(self, output_path=""):
         """Set the paths used for transaction files."""
-        # TODO: rename to path_*
-        self.path_default = path_default
-        self.transaction_path = transaction_path
-        if path_log != "":
-            self.log = logger.Logger("TransactionProcessor", self.path_log)
+        if output_path:
+            self.transaction_dir = output_path + os.sep + 'transactions'
+            log_path = output_path + os.sep + 'logs'
+            self.log = logger.Logger("TransactionProcessor", log_path)
+        else:
+            self.log = logger.Logger("TransactionProcessor")
