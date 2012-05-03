@@ -17,6 +17,14 @@ class TransactionProcessor:
         'r': "receivable.qif",
         'v': "visa.qif",
     }
+    account_types = {
+        'c': "Cash",
+        'n': "Bank",
+        'm': "CCard",
+        'p': "CCard",
+        'r': "Bank",
+        'v': "CCard",
+    }
     assets = {
         'c': "Assets:Current:Cash",
         'n': "Assets:Current:Chequing",
@@ -60,21 +68,29 @@ class TransactionProcessor:
                     expenses.items())
 
     # FILE IO
-    def check_for_existing_files(self):
-        """Copies default QIF files if custom files are missing."""
-        for filename in self.filenames.itervalues():
-            custom_file = self.transaction_path + os.sep + filename
-            if not os.path.isfile(custom_file):
-                default_file = self.default_path + os.sep + filename
-                if os.path.isfile(default_file):
-                    shutil.copyfile(default_file, custom_file)
+    def create_files_if_missing(self):
+        """Create QIF files with headers if they do not exist."""
+        for account_key, filename in self.filenames.iteritems()
+            filepath = self.path_transaction + filename
+            if not os.path.isfile(filepath):
+                account_name = self.accounts.get(account_key)
+                account_type = self.account_types.get(account_key)
+                self.create_transaction_file(filepath, account_name, account_type)
+
+    def append_to_file(self, filepath, data):
+        file = open(filepath, 'a')
+        file.write(data)
+        file.close()
+
+    def create_transaction_file(self, filepath, account_name, account_type):
+        """Create a QIF file for capturing transactions."""
+        header = self.qif_format_header(account_name, account_type)
+        self.append_to_file(filepath, header)
 
     def append_transaction_to_file(self, filename, transaction):
         """Append a formatted transaction to the specified file."""
-        filename = self.transaction_path + os.sep + filename 
-        file = open(filename, 'a')
-        file.write(transaction)
-        file.close()
+        filepath = self.transaction_path + os.sep + filename 
+        self.append_to_file(filepath, transaction)
 
     # TRANSACTION PROCESSING
     def Process(self, date, debit, credit, amount, memo):
@@ -85,10 +101,10 @@ class TransactionProcessor:
             qif_transfer = self.qif_convert_transfer(debit, credit)
             qif_amount = self.qif_convert_amount(debit, amount)
             qif_memo = memo
-            qif_transaction = self.qif_format(qif_date,
-                                              qif_transfer,
-                                              qif_amount,
-                                              qif_memo)
+            qif_transaction = self.qif_format_transaction(qif_date,
+                                                          qif_transfer,
+                                                          qif_amount,
+                                                          qif_memo)
             self.check_for_existing_files()
             self.append_transaction_to_file(qif_filename, qif_transaction)
             self.log_transaction(qif_date,
@@ -141,19 +157,30 @@ class TransactionProcessor:
         return valid_accounts and valid_amount and valid_date and valid_file
 
     # QIF FORMATTING
-    def qif_format(self, date, transfer, amount, memo):
+    def qif_format_transaction(self, date, transfer, amount, memo):
         """Formats qif data into a transaction for a QIF file."""
-        fmt_date = 'D' + date
-        fmt_amount = 'T' + amount
-        fmt_transfer = 'L' + transfer
-        fmt_memo = 'M' + memo
-        fmt_sep = '^'
-        fmt_transaction = (fmt_date + os.linesep + 
-                           fmt_amount + os.linesep + 
-                           fmt_transfer + os.linesep + 
-                           fmt_memo + os.linesep + 
-                           fmt_sep + os.linesep)
-        return fmt_transaction
+        data = { 'date': date,
+                 'amount': amount,
+                 'transfer': transfer,
+                 'memo': memo }
+        transaction = textwrap.dedent("""\
+            D{date}
+            T{amount}
+            L{transfer}
+            M{memo}
+            ^""".format(**data))
+        return transaction
+
+    def qif_format_header(self, account_name, account_type):
+        """Format an account name and type into a header for a QIF file."""
+        data = { 'name': account_name, 'type': account_type }
+        header = textwrap.dedent("""\
+            !Account
+            N{name}
+            T{type}
+            ^
+            !Type:{type}""".format(**data))
+        return header
 
     # QIF CONVERSION
     def qif_convert_amount(self, debit, amount):
@@ -186,6 +213,7 @@ class TransactionProcessor:
         """Logs the transaction."""
         file = os.path.basename(path)
         logindent = '\t\t\t\t  '
+        # TODO: use textwrap.dedent
         logmsg = ("TRANSACTION{0}".format(os.linesep) +
                   "{0}date: {1}{2}".format(logindent, date, os.linesep) +
                   "{0}file: {1}{2}".format(logindent, file, os.linesep) +
@@ -198,6 +226,7 @@ class TransactionProcessor:
         """Logs the transaction."""
         date = time.strftime('%m/%d/%Y', date)
         logindent = '\t\t\t\t  '
+        # TODO: use textwrap.dedent
         logmsg = ("TRANSACTION{0}".format(os.linesep) +
                   "{0}date: {1}{2}".format(logindent, date, os.linesep) +
                   "{0}debit: {1}{2}".format(logindent, debit, os.linesep) +
@@ -207,10 +236,10 @@ class TransactionProcessor:
         self.log.error(logmsg)
 
     # INITIALIZATION
-    def __init__(self, default_path="", transaction_path="", log_path=""):
+    def __init__(self, path_default="", transaction_path="", path_log=""):
         """Set the paths used for transaction files."""
-        self.default_path = default_path
-        self.log_path = log_path
+        # TODO: rename to path_*
+        self.path_default = path_default
         self.transaction_path = transaction_path
-        if log_path != "":
-            self.log = logger.Logger("TransactionProcessor", self.log_path)
+        if path_log != "":
+            self.log = logger.Logger("TransactionProcessor", self.path_log)
