@@ -100,7 +100,19 @@ class Powl:
             mailbox=
             
             [Paths]
-            output=output""")
+            output=output
+
+            [Qif_Filenames]
+
+            [Qif_Types]
+
+            [Qif_Assets]
+
+            [Qif_Liabilities]
+
+            [Qif_Revenues] 
+
+            [Qif_Expenses]""")
         file = open(self.file_config, 'a')
         file.write(default_config_data)
         file.close()
@@ -118,14 +130,26 @@ class Powl:
 
     def config_load(self):
         """Load custom config file settings."""
-        config = ConfigParser.ConfigParser()
-        config.readfp(open('config.cfg'))
-        self.address = config.get('Email','address')
-        self.password = config.get('Email','password')
-        self.mailbox = config.get('Email', 'mailbox')
-        workingdir = os.getcwd() + os.sep
-        # TODO: enable output path to be outside working dir 
-        self.output_path = workingdir + config.get('Paths', 'output')
+        self.config = ConfigParser.ConfigParser()
+        self.config.readfp(open('config.cfg'))
+        self.config_load_email()
+        self.config_load_qif()
+        self.output_path = os.getcwd() + os.sep + self.config.get('Paths', 'output')
+
+    def config_load_email(self):
+        """Load the settings from email section."""
+        self.address = self.config.get('Email','address')
+        self.password = self.config.get('Email','password')
+        self.mailbox = self.config.get('Email', 'mailbox')
+
+    def config_load_qif(self):
+        """Load the settings from qif section."""
+        self.qif_filenames = dict(self.config.items('Qif_Filenames'))
+        self.qif_types = dict(self.config.items('Qif_Types'))
+        self.qif_assets = dict(self.config.items('Qif_Assets'))
+        self.qif_liabilities = dict(self.config.items('Qif_Liabilities'))
+        self.qif_revenues = dict(self.config.items('Qif_Revenues'))
+        self.qif_expenses = dict(self.config.items('Qif_Expenses'))
 
     def config_setup(self):
         """Setup configuration settings and return if successful."""
