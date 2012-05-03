@@ -12,7 +12,7 @@ import sys
 import textwrap
 import time
 from powl.logger import logger
-from powl.processors import TransactionProcessor
+from powl.processors import transaction
 
 class Powl:
     """Class for processing emails to do a corresponding action."""
@@ -157,8 +157,7 @@ class Powl:
 
     def initialize_modules(self):
         """Intialize modules used for doing various actions."""
-        self.transaction = TransactionProcessor.\
-                           TransactionProcessor(self.output_path)
+        self.transaction = transaction.Transaction(self.output_path)
     
 if __name__ == '__main__':
     Powl().main()

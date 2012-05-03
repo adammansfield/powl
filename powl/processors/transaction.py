@@ -7,7 +7,7 @@ import textwrap
 import time
 from powl.logger import logger
 
-class TransactionProcessor:
+class Transaction:
     """A transaction processor for QIF files."""
     # TODO: replace qif accounts and files with a configurable file
     filenames = {

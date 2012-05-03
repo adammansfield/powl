@@ -3,8 +3,8 @@ export PYTHONPATH=.
 echo
 echo "Transaction Processor Tests"
 echo "==========================="
-python powl/tests/test_TransactionProcessor.py
-echo
-echo "Parse Tests"
-echo "==========="
-python powl/tests/test_Parse.py
+python powl/tests/test_processor_transaction.py
+#echo
+#echo "Parse Tests"
+#echo "==========="
+#python powl/tests/test_processor_action.py
