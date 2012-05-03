@@ -18,6 +18,7 @@ class Powl:
     """Class for processing emails to do a corresponding action."""
     
     default_mailbox = 'inbox'
+    output_dir = os.getcwd() + os.sep + 'output'
     file_config = 'config.cfg'
 
     # Email Processing
@@ -99,10 +100,7 @@ class Powl:
             mailbox=
             
             [Paths]
-            default=default
-            logs=logs
-            transactions=transactions
-            miscellaneous=miscellaneous""")
+            output=output""")
         file = open(self.file_config, 'a')
         file.write(default_config_data)
         file.close()
@@ -126,11 +124,8 @@ class Powl:
         self.password = config.get('Email','password')
         self.mailbox = config.get('Email', 'mailbox')
         workingdir = os.getcwd() + os.sep
-        self.path_default = workingdir + config.get('Paths', 'default')
-        # TODO: make path_logs hardcoded
-        self.path_logs = workingdir + config.get('Paths', 'logs')
-        self.path_transactions = workingdir + config.get('Paths', 'transactions')
-        self.path_miscellaneous = workingdir + config.get('Paths', 'miscellaneous')
+        # TODO: enable output path to be outside working dir 
+        self.output_path = workingdir + config.get('Paths', 'output')
 
     def config_setup(self):
         """Setup configuration settings and return if successful."""
@@ -157,19 +152,13 @@ class Powl:
 
     def check_for_existing_folders(self):
         """Check if folders exist and if not create them."""
-        if not os.path.exists(self.path_logs):
-            os.makedirs(self.path_logs)
-        if not os.path.exists(self.path_transactions):
-            os.makedirs(self.path_transactions)
-        if not os.path.exists(self.path_miscellaneous):
-            os.makedirs(self.path_miscellaneous)
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
 
     def initialize_modules(self):
         """Intialize modules used for doing various actions."""
         self.transaction = TransactionProcessor.\
-                           TransactionProcessor(self.path_default,
-                                                self.path_transactions,
-                                                self.path_logs)
+                           TransactionProcessor(self.output_path)
     
 if __name__ == '__main__':
     Powl().main()
