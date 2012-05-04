@@ -105,7 +105,7 @@ class Transaction:
         self.append_to_file(filepath, transaction)
 
     # TRANSACTION PROCESSING
-    def Process(self, date, debit, credit, amount, memo):
+    def process(self, date, debit, credit, amount, memo):
         """Process a transaction into the QIF format and write to file."""
         if self.valid_transaction(date, debit, credit, amount):
             qif_date = self.qif_convert_date(date)

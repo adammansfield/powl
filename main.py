@@ -88,7 +88,7 @@ class Powl:
                 memo = param.replace('m ','')
                 memo = memo.replace("\"", '')
                 memo = memo.strip()
-        self.transaction.Process(date, debit, credit, amount, memo)
+        self.transaction.process(date, debit, credit, amount, memo)
 
     # CONFIGURATION
     def config_create_default(self):
