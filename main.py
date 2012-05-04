@@ -63,7 +63,7 @@ class Powl:
     # Action Processing
     def process_miscellaneous(self, data, date):
         """Write miscellaneous message to file."""
-        filename = self.path_miscellaneous + os.sep + 'miscellaneous.txt'
+        filename = self.output_dir + os.sep + 'miscellaneous.txt'
         file = open(filename, 'a')
         file.write(data)
         file.close()
