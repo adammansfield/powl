@@ -11,22 +11,19 @@ import shutil
 import sys
 import textwrap
 import time
-from powl import logger
-from powl.processors import transaction
+from powl import Config
+from powl import Logger
+from powl.processors import Transaction
 
 class Powl:
     """Class for processing emails to do a corresponding action."""
-    
-    default_mailbox = 'inbox'
-    output_dir = os.getcwd() + os.sep + 'output'
-    file_config = 'config.cfg'
 
     # Email Processing
     def process_inbox(self):
         """Parse through an inbox of emails."""
         self.imap = imaplib.IMAP4_SSL("imap.gmail.com")
-        self.imap.login(self.address, self.password)
-        self.imap.select(self.mailbox)
+        self.imap.login(self.config.address, self.config.password)
+        self.imap.select(self.config.mailbox)
         search_response, email_ids = self.imap.search(None, "(Unseen)")
         self.log.info("PROCESSING INBOX")
         for email_id in email_ids[0].split():
@@ -90,98 +87,15 @@ class Powl:
                 memo = memo.strip()
         self.transaction.process(date, debit, credit, amount, memo)
 
-    # CONFIGURATION
-    def config_create_default(self):
-        """Create a default config file."""
-        default_config_data = textwrap.dedent("""\
-            [Email]
-            address=
-            password=
-            mailbox=
-            
-            [Paths]
-            output=output
-
-            [Qif_Filenames]
-
-            [Qif_Types]
-
-            [Qif_Assets]
-
-            [Qif_Liabilities]
-
-            [Qif_Revenues] 
-
-            [Qif_Expenses]""")
-        file = open(self.file_config, 'a')
-        file.write(default_config_data)
-        file.close()
-
-    def config_is_valid(self):
-        """Check if the config is valid."""
-        config = ConfigParser.ConfigParser()
-        config.readfp(open(self.file_config))
-        email_account = config.get('Email', 'address')
-        if not email_account:
-            self.log.info('Config file is not valid. Please enter your information.')
-            return False
-        else:
-            return True
-
-    def config_load(self):
-        """Load custom config file settings."""
-        self.config = ConfigParser.ConfigParser()
-        self.config.readfp(open('config.cfg'))
-        self.config_load_email()
-        self.config_load_qif()
-        self.output_path = os.getcwd() + os.sep + self.config.get('Paths', 'output')
-
-    def config_load_email(self):
-        """Load the settings from email section."""
-        self.address = self.config.get('Email','address')
-        self.password = self.config.get('Email','password')
-        self.mailbox = self.config.get('Email', 'mailbox')
-
-    def config_load_qif(self):
-        """Load the settings from qif section."""
-        self.qif_filenames = dict(self.config.items('Qif_Filenames'))
-        self.qif_types = dict(self.config.items('Qif_Types'))
-        self.qif_assets = dict(self.config.items('Qif_Assets'))
-        self.qif_liabilities = dict(self.config.items('Qif_Liabilities'))
-        self.qif_revenues = dict(self.config.items('Qif_Revenues'))
-        self.qif_expenses = dict(self.config.items('Qif_Expenses'))
-
-    def config_setup(self):
-        """Setup configuration settings and return if successful."""
-        if not os.path.isfile(self.file_config):
-            self.config_create_default()
-            self.log.info('Created default config file. Please enter your information.')
-            return False
-        elif self.config_is_valid():
-            self.config_load()
-            return True
-        else:
-            return False
-
     # Initialization
     def main(self):
         """Setup and process email inbox."""
         # TODO: move check for folders up here
-        self.log = logger.Logger('Powl')
-        config_successful = self.config_setup()
-        if config_successful:
-            self.check_for_existing_folders()
-            self.initialize_modules()
-            self.process_inbox()
-
-    def check_for_existing_folders(self):
-        """Check if folders exist and if not create them."""
-        if not os.path.exists(self.output_dir):
-            os.makedirs(self.output_dir)
-
-    def initialize_modules(self):
-        """Intialize modules used for doing various actions."""
-        self.transaction = transaction.Transaction(self.output_path)
+        self.config = Config()
+        self.config.read_config_file()
+        self.log = Logger('Powl', self.config.output_dir)
+        self.transaction = Transaction(self.config.output_dir)
+        self.process_inbox()
     
 if __name__ == '__main__':
     Powl().main()

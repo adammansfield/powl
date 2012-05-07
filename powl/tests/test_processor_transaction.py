@@ -4,7 +4,7 @@ import os
 import sys
 import time
 import unittest
-from powl.processors import transaction
+from powl.processors import Transaction
 
 class TransactionTests(unittest.TestCase):
     """Class for testing transaction processing."""
@@ -143,7 +143,7 @@ class TransactionTests(unittest.TestCase):
     # INITIALIZATION
     def setUp(self):
         # TODO: set accounts in transactionprocessor before testing
-        self.transaction = transaction.Transaction()
+        self.transaction = Transaction()
 
 
 if __name__ == '__main__':

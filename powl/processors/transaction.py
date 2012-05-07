@@ -252,7 +252,6 @@ class Transaction:
         """Set the paths used for transaction files."""
         if output_path:
             self.transaction_dir = output_path + os.sep + 'transactions'
-            log_path = output_path + os.sep + 'logs'
-            self.log = logger.Logger("TransactionProcessor", log_path)
+            self.log = logger.Logger("TransactionProcessor", output_path)
         else:
             self.log = logger.Logger("TransactionProcessor")

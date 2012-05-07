@@ -5,6 +5,8 @@ import time
 class Logger:
     """Class for logging messages to stream and to file."""
 
+    log_dir = 'logs'
+
     # LOGGING
     def critical(self, message, *args, **kwargs):
         """Uses the predefined logger to log a critical message."""
@@ -46,6 +48,7 @@ class Logger:
     # INITIALIZATION
     def __init__(self, loggername="", filedir="", level=logging.DEBUG):
         """Initialize the file and stream handlers."""
+        # TODO: clean up this
         self.logger = logging.getLogger(loggername)
         self.logger.setLevel(level)
         logformat = '%(asctime)s\t%(levelname)s\t%(message)s'
@@ -54,6 +57,7 @@ class Logger:
         self.level = level
         self.set_stream_handler()
         if filedir != "":
+            filedir = filedir + os.sep + self.log_dir
             self.create_folder_if_missing(filedir)
             self.set_file_handler(filedir)
 
