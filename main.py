@@ -11,7 +11,7 @@ import shutil
 import sys
 import textwrap
 import time
-from powl.logger import logger
+from powl import logger
 from powl.processors import transaction
 
 class Powl:

@@ -5,7 +5,7 @@ import os
 import shutil
 import textwrap
 import time
-from powl.logger import logger
+from powl import logger
 
 class Transaction:
     """A transaction processor for QIF files."""
