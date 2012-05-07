@@ -11,9 +11,9 @@ import shutil
 import sys
 import textwrap
 import time
-from powl import Config
-from powl import Logger
-from powl.processors import Transaction
+from powl.config import Config
+from powl.logger import Logger
+from powl.processors.transaction import Transaction
 
 class Powl:
     """Class for processing emails to do a corresponding action."""
