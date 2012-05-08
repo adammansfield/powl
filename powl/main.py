@@ -15,7 +15,7 @@ from powl.config import Config
 from powl.logger import Logger
 from powl.processors.transaction import Transaction
 
-class Powl:
+class Main:
     """Class for processing emails to do a corresponding action."""
 
     # Email Processing
@@ -97,5 +97,7 @@ class Powl:
         self.transaction = Transaction(self.config.output_dir)
         self.process_inbox()
     
+
+main = Main().main
 if __name__ == '__main__':
-    Powl().main()
+    main(*sys.argv[1:])
