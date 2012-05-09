@@ -60,7 +60,7 @@ class Main:
     # Action Processing
     def process_miscellaneous(self, data, date):
         """Write miscellaneous message to file."""
-        filename = self.output_dir + os.sep + 'miscellaneous.txt'
+        filename = os.path.join(self.config.output_dir, 'miscellaneous.txt')
         file = open(filename, 'a')
         file.write(data)
         file.close()
