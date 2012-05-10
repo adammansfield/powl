@@ -94,7 +94,13 @@ class Main:
         self.config = Config()
         self.config.read_config_file()
         self.log = Logger('Powl', self.config.output_dir)
-        self.transaction = Transaction(self.config.output_dir)
+        self.transaction = Transaction(self.config.qif_filenames,
+                                       self.config.qif_types,
+                                       self.config.qif_assets,
+                                       self.config.qif_liabilities,
+                                       self.config.qif_revenues,
+                                       self.config.qif_expenses,
+                                       self.config.output_dir)
         self.process_inbox()
     
 

@@ -116,7 +116,7 @@ class Config:
         liabilities_section = self.section_accounting['liabilities']
         expenses_section = self.section_accounting['expenses']
         revenues_section = self.section_accounting['revenues']
-        self.qif_filepaths = dict(self.config.items(filenames_section))
+        self.qif_filenames = dict(self.config.items(filenames_section))
         self.qif_types = dict(self.config.items(types_section))
         self.qif_assets = dict(self.config.items(assets_section))
         self.qif_liabilities = dict(self.config.items(liabilities_section))

@@ -9,64 +9,6 @@ from powl import logger
 
 class Transaction:
     """A transaction processor for QIF files."""
-    # TODO: replace qif accounts and files with a configurable file
-    filenames = {
-        'c': "cash.qif",
-        'n': "chequing.qif",
-        'm': "mastercard.qif",
-        'p': "payable.qif",
-        'r': "receivable.qif",
-        'v': "visa.qif",
-    }
-    account_types = {
-        'c': "Cash",
-        'n': "Bank",
-        'm': "CCard",
-        'p': "CCard",
-        'r': "Bank",
-        'v': "CCard",
-    }
-    assets = {
-        'c': "Assets:Current:Cash",
-        'n': "Assets:Current:Chequing",
-        'r': "Assets:Current:Receivable",
-        's': "Assets:Current:Savings",
-    }
-    liabilities = {
-        'm': "Liabilities:Mastercard",
-        'p': "Liabilities:Payable",
-        'v': "Liabilities:Visa",
-    }
-    revenues = { 
-        'ear': "Revenue:Earnings",
-        'gif': "Revenue:Gifts",
-        'int': "Revenue:Interest",
-        'mis': "Revenue:Miscellaneous",
-        'por': "Revenue:Portfolio",
-    }
-    expenses = {
-        'gas': "Expenses:Auto:Gas",
-        'ins': "Expenses:Auto:Insurance",
-        'mai': "Expenses:Auto:Maintenance & Fees",
-        'clo': "Expenses:Commodities:Clothing",
-        'com': "Expenses:Commodities:Computer",
-        'woe': "Expenses:Commodities:Workout Equipment",
-        'din': "Expenses:Entertainment:Dining",
-        'gam': "Expenses:Entertainment:Games",
-        'ent': "Expenses:Entertainment:General",
-        'out': "Expenses:Entertainment:Outtings",
-        'mis': "Expenses:Miscellanous:General",
-        'gif': "Expenses:Miscellanous:Gifts",
-        'los': "Expenses:Miscellanous:Loss",
-        'eye': "Expenses:Upkeep:Eyewear",
-        'nut': "Expenses:Upkeep:Nutrition",
-        'sup': "Expenses:Upkeep:Supplies",
-        'pho': "Expenses:Utilities:Phone",
-    }
-    accounts = dict(assets.items() +
-                    liabilities.items() +
-                    revenues.items() +
-                    expenses.items())
 
     # FILE SYSTEM CHECKING
     def check_filesystem_for_files(self):
@@ -82,10 +24,10 @@ class Transaction:
     def create_files_if_missing(self):
         """Create QIF files with headers if they do not exist."""
         for account_key, filename in self.filenames.iteritems():
-            filepath = self.transaction_dir + os.sep + filename
+            filepath = os.path.join(self.transaction_dir, filename)
             if not os.path.isfile(filepath):
                 account_name = self.accounts.get(account_key)
-                account_type = self.account_types.get(account_key)
+                account_type = self.types.get(account_key)
                 self.create_transaction_file(filepath, account_name, account_type)
 
     # FILE APPENDING
@@ -248,8 +190,18 @@ class Transaction:
         self.log.error(logmsg)
 
     # INITIALIZATION
-    def __init__(self, output_path=""):
+    def __init__(self, filenames, types, assets, liabilities, revenues, expenses, output_path=""):
         """Set the paths used for transaction files."""
+        self.filenames = filenames
+        self.types = types
+        self.assets = assets
+        self.liabilities = liabilities
+        self.revenues = revenues
+        self.expenses = expenses
+        self.accounts = dict(self.assets.items() +
+                             self.liabilities.items() +
+                             self.revenues.items() +
+                             self.expenses.items())
         if output_path:
             self.transaction_dir = output_path + os.sep + 'transactions'
             self.log = logger.Logger("TransactionProcessor", output_path)
