@@ -68,7 +68,7 @@ class Transaction:
                                  qif_memo)
         else:
             # TODO: return an error for powl.py to handle
-            self.log_transaction_error(date, debit, credit, amount, memo)
+            logger.transaction_error(date, debit, credit, amount, memo)
 
     # VALIDITY
     def valid_accounts(self, debit, credit):
@@ -174,7 +174,7 @@ class Transaction:
                   "{0}transfer: {1}{2}".format(logindent, transfer, os.linesep) +
                   "{0}amount: {1}{2}".format(logindent, amount, os.linesep) +
                   "{0}memo: {1}{2}".format(logindent, memo, os.linesep))
-        self.log.info(logmsg)
+        logger.info(logmsg)
 
     def log_transaction_error(self, date, debit, credit, amount, memo):
         """Logs the transaction."""
@@ -187,7 +187,7 @@ class Transaction:
                   "{0}credit: {1}{2}".format(logindent, credit, os.linesep) +
                   "{0}amount: {1}{2}".format(logindent, amount, os.linesep) +
                   "{0}memo: {1}{2}".format(logindent, memo, os.linesep))
-        self.log.error(logmsg)
+        logger.error(logmsg)
 
     # INITIALIZATION
     def __init__(self, filenames, types, assets, liabilities, revenues, expenses, output_path=""):
@@ -204,6 +204,3 @@ class Transaction:
                              self.expenses.items())
         if output_path:
             self.transaction_dir = output_path + os.sep + 'transactions'
-            self.log = logger.Logger("TransactionProcessor", output_path)
-        else:
-            self.log = logger.Logger("TransactionProcessor")

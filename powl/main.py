@@ -11,8 +11,8 @@ import shutil
 import sys
 import textwrap
 import time
+import powl.logger as logger
 from powl.config import Config
-from powl.logger import Logger
 from powl.processors.transaction import Transaction
 
 class Main:
@@ -25,7 +25,7 @@ class Main:
         self.imap.login(self.config.address, self.config.password)
         self.imap.select(self.config.mailbox)
         search_response, email_ids = self.imap.search(None, "(Unseen)")
-        self.log.info("PROCESSING INBOX")
+        logger.info("PROCESSING INBOX")
         for email_id in email_ids[0].split():
             fetch_response, data = self.imap.fetch(email_id, "(RFC822)")
             mail = email.message_from_string(data[0][1])
@@ -34,7 +34,7 @@ class Main:
                 if part.get_content_type() == 'text/html':
                     body = part.get_payload()
                     message = self.strip_message_markup(body)
-                    self.log.debug('EMAIL   %s', message.strip())
+                    logger.debug('EMAIL   %s', message.strip())
                     self.parse_message(message, date)
 
     def strip_message_markup(self, message):
@@ -64,7 +64,7 @@ class Main:
         file = open(filename, 'a')
         file.write(data)
         file.close()
-        self.log.info('MISC\t%s', data)
+        logger.info('MISC\t%s', data)
 
     def process_todo(self, task, date):
         """Send task to toodledo."""
@@ -93,7 +93,8 @@ class Main:
         # TODO: move check for folders up here
         self.config = Config()
         self.config.read_config_file()
-        self.log = Logger('Powl', self.config.output_dir)
+        log_dir = os.path.join(self.config.output_dir, 'logs')
+        logger.initialize(log_dir)
         self.transaction = Transaction(self.config.qif_filenames,
                                        self.config.qif_types,
                                        self.config.qif_assets,
