@@ -7,16 +7,16 @@ _EXTENSION = 'log'
 _MESSAGE_FORMAT = '%(asctime)s\t%(levelname)s\t%(message)s'
 
 # DAILY FORMAT
-_daily_message_dateformat = '%H:%M'
-_daily_formatter = logging.Formatter(_MESSAGE_FORMAT, _daily_message_dateformat)
-_daily_filebase = time.strftime('%Y-%m-%d', time.localtime())
-_daily_filename = _daily_filebase + '.' + _EXTENSION
+_DAILY_MESSAGE_DATEFORMAT = '%H:%M'
+_DAILY_FORMATTER = logging.Formatter(_MESSAGE_FORMAT, _DAILY_MESSAGE_DATEFORMAT)
+_DAILY_FILEBASE = time.strftime('%Y-%m-%d', time.localtime())
+_DAILY_FILENAME = _DAILY_FILEBASE + '.' + _EXTENSION
 
 # WEEKLY FORMAT
-_weekly_message_dateformat = '%m-%d %H:%M'
-_weekly_formatter = logging.Formatter(_MESSAGE_FORMAT, _weekly_message_dateformat)
-_weekly_filebase = time.strftime('%Y-W%W', time.localtime())
-_weekly_filename = _weekly_filebase + '.' + _EXTENSION
+_WEEKLY_MESSAGE_DATEFORMAT = '%m-%d %H:%M'
+_WEEKLY_FORMATTER = logging.Formatter(_MESSAGE_FORMAT, _WEEKLY_MESSAGE_DATEFORMAT)
+_WEEKLY_FILEBASE = time.strftime('%Y-W%W', time.localtime())
+_WEEKLY_FILENAME = _WEEKLY_FILEBASE + '.' + _EXTENSION
 
 # FORMAT TYPES
 FORMAT_TYPE_DAILY = 'FORMAT_TYPE_DAILY'
@@ -24,8 +24,8 @@ FORMAT_TYPE_WEEKLY = 'FORMAT_TYPE_WEEKLY'
 
 # DEFAULTS
 _DEFAULT_FORMAT_TYPE = FORMAT_TYPE_DAILY
-_DEFAULT_FILENAME = _daily_filename
-_DEFAULT_FORMATTER = _daily_formatter
+_DEFAULT_FILENAME = _DAILY_FILENAME
+_DEFAULT_FORMATTER = _DAILY_FORMATTER
 
 # LOGGER
 _logger = None
@@ -91,11 +91,11 @@ def initialize(format_type=_DEFAULT_FORMAT_TYPE, directory='', level=logging.DEB
     _logger = logging.getLogger()
     _logger.setLevel(level) 
     if format_type == FORMAT_TYPE_DAILY:
-        formatter = _daily_formatter
-        filename = _daily_filename
+        formatter = _DAILY_FORMATTER
+        filename = _DAILY_FILENAME
     elif format_type == FORMAT_TYPE_WEEKLY:
-        formatter = _weekly_formatter
-        filename = _weekly_filename
+        formatter = _WEEKLY_FORMATTER
+        filename = _WEEKLY_FILENAME
     else:
         formatter = _DEFAULT_FORMATTER
         filename = _DEFAULT_FILENAME
@@ -104,4 +104,5 @@ def initialize(format_type=_DEFAULT_FORMAT_TYPE, directory='', level=logging.DEB
         if not os.path.isdir(directory):
             os.makedirs(directory)
         if os.path.isdir(directory):
-            _set_file_handler(directory, level, formatter)
+            filepath = os.path.join(directory, filename)
+            _set_file_handler(filepath, level, formatter)

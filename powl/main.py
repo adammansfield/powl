@@ -94,7 +94,7 @@ class Main:
         self.config = Config()
         self.config.read_config_file()
         log_dir = os.path.join(self.config.output_dir, 'logs')
-        logger.initialize(log_dir)
+        logger.initialize(logger.FORMAT_TYPE_DAILY, log_dir)
         self.transaction = Transaction(self.config.qif_filenames,
                                        self.config.qif_types,
                                        self.config.qif_assets,
