@@ -1,29 +1,49 @@
 #!/usr/bin/env python
-"""Manage the output of powl to the filesystem."""
+"""Safely output to the filesystem."""
 import errno
 import os
 
-class Output:
-    """Manage the output of powl to the filesystem."""
+def append(filepath, data):
+    """Safely append data to the specified file."""
+    try:
+        with open(filepath, 'a') as fp:
+            fp.write(data)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
 
-    def append(filepath, data):
-        """Append data to the specified file."""
-        if os.path.isfile(filepath):
-            with open(filepath, 'a') as fp:
-                fp.write(data)
+def write(filepath, data):
+    """Safely write data (with backup if exists) to the specified file."""
+    if not os.path.isfile(filepath):
+        _write(filepath, data)
+    else:
+        backupfile = filepath + '.bak'
+        tempfile = filepath + '.tmp'
+        os.rename(filepath, backupfile)
+        _write(tempfile, data)
+        if os.path.isfile(tempfile):
+           os.rename(tempfile, filepath) 
+           os.remove(backupfile)
 
-    def write(filepath, data):
-        """Write data to the specified file."""
-        if os.path.isfile(filepath):
-            with open(filepath, 'w') as fp:
-                fp.write(data)
+def _write(filepath, data):
+    """Safely write data to the specified file."""
+    try:
+        with open(filepath, 'w') as fp:
+            fp.write(data)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
 
-    def makedir(directories):
-        """Make the specified directories."""
-        for directory in directories:
-            if not os.path.isdir(directory):
-                try:
-                    os.makedirs(directory)
-                except OSError as e:
-                    if e.errno != errno.EEXIST:
-                        raise
+def makedir(directories):
+    """Safely and recursively make the specified directories."""
+    for directory in directories:
+        if not os.path.isdir(directory):
+            _makedir(directory)
+
+def _makedir(directory):
+    """Safely make the specified directory."""
+    try:
+        os.makedirs(directory)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
