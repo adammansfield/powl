@@ -20,7 +20,7 @@ class Powl:
     """Class for processing emails to do a corresponding action."""
 
     # Email Processing
-    def process_inbox(self):
+    def process(self):
         """Parse through an inbox of emails."""
         self.imap = imaplib.IMAP4_SSL("imap.gmail.com")
         self.imap.login(self.config.address, self.config.password)
@@ -91,30 +91,43 @@ class Powl:
 
 
 
-    # TEMPLATES
+    # DIRECTORIES AND TEMPLATES
+    def _create_directories():
+        """Create the configured directories if they do not exist."""
+        output.makedir(self.config.directories)
 
-
+    def _create_transaction_templates():
+        """Create transaction templates if files do not exist."""
+        templates = self.transaction.get_templates()
+        for filename, template in templates:
+            if not os.isfile(filename):
+                output.write(filename, template)
+         
     # LOADING
     def _load_config():
         """Load the configuration settings."""
         self.config = Config()
-        self.config.read_config_file()
-        output.makedir(self.config.dirs)
-        logger.set_file_handler(self.config.log_dir)
+        if not os.isfile(filename):
+            output.write(self.config.config_filepath,
+                         self.config_file_layout)
+        self.config.read()
 
     def _load_processors():
-        """Load the processors."""
+        """Load the processors with custom config settings."""
         self.transaction = Transaction(self.config.qif_filenames,
                                        self.config.qif_types,
                                        self.config.qif_assets,
                                        self.config.qif_liabilities,
                                        self.config.qif_revenues,
                                        self.config.qif_expenses)
-        self._create_transaction_templates()
 
     # INITIALIZATION
     def __init__(self):
         """Setup and process email inbox."""
         logger.initialize(logger.WEEKLY_FORMAT_TYPE)
         self._load_config()
+        self._create_directories()
+        logger.set_file_handler(self.config.log_dir)
         self._load_processors()
+        self._create_transaction_templates()
+

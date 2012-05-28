@@ -100,7 +100,7 @@ class Config:
                                           self._folders_output)
         self.log_dir = os.join(self.output_dir, self._log_dir)
         self.qif_dir = os.join(self.output_dir, self._transactions_dir)
-        self.all_dir = [
+        self.directories = [
             self.output_dir,
             self.log_dir,
             self.qif_dir

@@ -10,10 +10,13 @@ from powl import logger
 class Transaction:
     """A transaction processor for QIF files."""
 
-    def get_filenames_and_templates(self):
+    def get_templates(self):
         # TODO: return list of tuples for filename:template
         #       Use this list in main.py to pass to output.py to
         #       create folders.
+        files = [ 
+
+
         pass
 
 
