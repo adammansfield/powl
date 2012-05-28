@@ -19,13 +19,15 @@ _WEEKLY_FILEBASE = time.strftime('%Y-W%W', time.localtime())
 _WEEKLY_FILENAME = _WEEKLY_FILEBASE + '.' + _EXTENSION
 
 # FORMAT TYPES
-FORMAT_TYPE_DAILY = 'FORMAT_TYPE_DAILY'
-FORMAT_TYPE_WEEKLY = 'FORMAT_TYPE_WEEKLY'
+FORMAT_DAILY = 'FORMAT_DAILY'
+FORMAT_WEEKLY = 'FORMAT_WEEKLY'
 
 # DEFAULTS
-_DEFAULT_FORMAT_TYPE = FORMAT_TYPE_DAILY
+_DEFAULT_DIR = 'logs'
+_DEFAULT_FORMAT = FORMAT_DAILY
 _DEFAULT_FILENAME = _DAILY_FILENAME
 _DEFAULT_FORMATTER = _DAILY_FORMATTER
+_DEFAULT_LEVEL = logging.DEBUG
 
 # LOGGER
 _logger = None
@@ -68,41 +70,39 @@ def warning(message, *args, **kwargs):
     _logger.warning(message, *args, **kwargs)
 
 # HANDLERS
-def _set_file_handler(filepath, level, formatter):
-    """Set file, level, and format for the log to file messages."""
-    global _logger
-    handler = logging.FileHandler(filepath)
-    handler.setLevel(level)
-    handler.setFormatter(formatter)
+def set_stream_handler():
+    """Set level and format for the stream messages."""
+    global _logger, _level, _formatter
+    handler = logging.StreamHandler()
+    handler.setLevel(_level)
+    handler.setFormatter(_formatter)
     _logger.addHandler(handler)
 
-def _set_stream_handler(level, formatter):
-    """Set level and format for the stream messages."""
-    global _logger
-    handler = logging.StreamHandler()
-    handler.setLevel(level)
-    handler.setFormatter(formatter)
+def set_file_handler(directory):
+    """Set file, level, and format for the log to file messages."""
+    global _logger, _filename, _level, _formatter
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
+    filepath = os.join(directory, _filename)
+    handler = logging.FileHandler(filepath)
+    handler.setLevel(_level)
+    handler.setFormatter(_formatter)
     _logger.addHandler(handler)
 
 # INITIALIZATION
-def initialize(format_type=_DEFAULT_FORMAT_TYPE, directory='', level=logging.DEBUG):
+def initialize(format_type=_DEFAULT_FORMAT, _level=_DEFAULT_LEVEL):
     """Get a logger and set stream and file handlers."""
-    global _logger
+    global _logger, _filename, _formatter, _level
+    _level = level
     _logger = logging.getLogger()
-    _logger.setLevel(level) 
+    _logger.setLevel(_level) 
     if format_type == FORMAT_TYPE_DAILY:
-        formatter = _DAILY_FORMATTER
-        filename = _DAILY_FILENAME
+        _formatter = _DAILY_FORMATTER
+        _filename = _DAILY_FILENAME
     elif format_type == FORMAT_TYPE_WEEKLY:
-        formatter = _WEEKLY_FORMATTER
-        filename = _WEEKLY_FILENAME
+        _formatter = _WEEKLY_FORMATTER
+        _filename = _WEEKLY_FILENAME
     else:
-        formatter = _DEFAULT_FORMATTER
-        filename = _DEFAULT_FILENAME
-    _set_stream_handler(level, formatter)
-    if directory:
-        if not os.path.isdir(directory):
-            os.makedirs(directory)
-        if os.path.isdir(directory):
-            filepath = os.path.join(directory, filename)
-            _set_file_handler(filepath, level, formatter)
+        _formatter = _DEFAULT_FORMATTER
+        _filename = _DEFAULT_FILENAME
+    set_stream_handler()
