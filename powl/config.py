@@ -8,132 +8,136 @@ class Config:
     """Class for processing custom powl config file for settings."""
 
     # DEFAULTS
-    default_filepath = 'config.cfg'
-    default_mailbox = 'inbox'
-    default_output_dir = os.getcwd() + os.sep + 'output'
+    _default_filepath = 'config.cfg'
+    _default_mailbox = 'inbox'
+    _default_output_dir = os.join(os.getcwd(), 'output')
+
+    # CONSTANTS
+    _transaction_dir = 'transactions'
+    _log_dir = 'logs'
+
+    # CONFIG SECTIONS AND KEYS
+    _email_section = 'Email'
+    _email_address = 'address'
+    _email_password = 'password'
+    _email_mailbox = 'mailbox'
+    _folders_section = 'Folders'
+    _folders_output = 'output'
+    _accounting_filenames_section = 'Accounting Filenames'
+    _accounting_types_section = 'Accounting Types'
+    _assets_section = 'Assets'
+    _liabilities_section = 'Liabilities'
+    _revenues_section = 'Revenues'
+    _expenses_section = 'Expenses'
 
     # CONFIG FILE
-    section_email = {
-        'email': 'Email',
-        'address': 'address',
-        'password': 'password',
-        'mailbox': 'mailbox'
+    _config_section_keys = {
+        'email_section': self._email_section,
+        'email_address': self._email_address,
+        'email_password': self._email_password,
+        'email_mailbox': self._email_mailbox
+        'folders_section': self._folders_section,
+        'folders_output': self._folders_output
+        'accounting_filenames_section': self._accounting_filenames_section,
+        'accounting_types_section': self._accounting_types_section,
+        'assets_section': self._assets_section,
+        'liabilities_section': self._liabilities_section,
+        'revenues_section': self._revenues_section,
+        'expenses_section': self._expenses_section
     }
-    section_folders = { 
-        'folders': 'Folders',
-        'output': 'output'
-    }
-    section_accounting = {
-        'accounting_filenames': 'Accounting Filenames',
-        'accounting_types': 'Accounting Types',
-        'assets': 'Assets',
-        'liabilities': 'Liabilities',
-        'revenues': 'Revenues',
-        'expenses': 'Expenses'
-    }
-    config_sections = dict(section_email.items() +
-                           section_folders.items() +
-                           section_accounting.items())
-    # TODO: add comments to default config file on how to fill out.
-    config_file_layout = textwrap.dedent("""\
-        [{email}]
-        {address}=
-        {password}=
-        {mailbox}=
+    config_template = textwrap.dedent("""\
+        [{email_section}]
+        {email_address}=
+        {email_password}=
+        {email_mailbox}=
 
-        [{folders}]
-        {output}=
+        [{folders_section}]
+        {folders_output}=
 
-        [{accounting_filenames}]
+        [{accounting_filenames_section}]
 
-        [{accounting_types}]
+        [{accounting_types_section}]
 
-        [{assets}]
+        [{assets_section}]
 
-        [{liabilities}]
+        [{liabilities_section}]
 
-        [{revenues}] 
+        [{revenues_section}] 
 
-        [{expenses}]""".format(**config_sections)
+        [{expenses_section}]""".format(_config_section_keys) 
     )
 
-    # CONFIG FILE
-    def read_config_file(self):
-        """Check if config exists and load all settings."""
-        self.create_default_config_file_if_missing()
-        self.get_configparser()
-        self.load_all_settings()
-        self.set_unknowns_to_defaults()
-        self.create_output_dir_if_missing()
-
-    def get_configparser(self):
-        """Get config parser and read from file."""
-        self.config = ConfigParser.ConfigParser()
-        with open(self.filepath) as fp:
-            self.config.readfp(fp)
-
-    # MISSING FILES AND FOLDERS
-    def create_default_config_file_if_missing(self):
-        """Create a default config file if it is missing."""
-        if not os.path.isfile(self.filepath):
-            file = open(self.filepath, 'w')
-            file.write(self.config_file_layout)
-            file.close()
-
-    def create_output_dir_if_missing(self):
-        """Create the output directory if it is missing."""
-        if not os.path.isdir(self.output_dir):
-            os.makedirs(self.output_dir)
+    # FILE I/O
+    def _get_configparser(self):
+        """Read from config file to get config parser."""
+        self._config = ConfigParser.ConfigParser()
+        try:
+            with open(self.config_filepath) as fp:
+                self._config.readfp(fp)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
 
     # LOADING SETTINGS
-    def load_all_settings(self):
+    def _load_all_settings(self):
         """Load all the settings from each subsection."""
-        self.load_email_settings()
-        self.load_folders_settings()
-        self.load_qif_settings()
+        self._load_email_settings()
+        self._load_folders_settings()
+        self._load_qif_settings()
 
-    def load_email_settings(self):
+    def _load_email_settings(self):
         """Load the settings from the email section."""
-        email_section = self.section_email['email']
-        address_key = self.section_email['address']
-        password_key = self.section_email['password']
-        mailbox_key = self.section_email['mailbox']
-        self.address = self.config.get(email_section, address_key)
-        self.password = self.config.get(email_section, password_key)
-        self.mailbox = self.config.get(email_section, mailbox_key)
+        self.address = self._config.get(self._email_section,
+                                        self._email_address)
+        self.password = self._config.get(self._email_section,
+                                         self._email_password)
+        self.mailbox = self._config.get(self._email_section,
+                                        self._email_mailbox)
 
-    def load_folders_settings(self):
+    def _load_folders_settings(self):
         """Load the settings from the paths section."""
-        folders_section = self.section_folders['folders']
-        output_key = self.section_folders['output']
-        self.output_dir = self.config.get(folders_section, output_key)
+        self.output_dir = self.config.get(self._folders_section,
+                                          self._folders_output)
+        self.log_dir = os.join(self.output_dir, self._log_dir)
+        self.qif_dir = os.join(self.output_dir, self._transactions_dir)
+        self.all_dir = [
+            self.output_dir,
+            self.log_dir,
+            self.qif_dir
+        ]
 
-    def load_qif_settings(self):
+    def _load_qif_settings(self):
         """Load the settings from the qif sections."""
-        filenames_section = self.section_accounting['accounting_filenames']
-        types_section = self.section_accounting['accounting_types']
-        assets_section = self.section_accounting['assets']
-        liabilities_section = self.section_accounting['liabilities']
-        expenses_section = self.section_accounting['expenses']
-        revenues_section = self.section_accounting['revenues']
-        self.qif_filenames = dict(self.config.items(filenames_section))
-        self.qif_types = dict(self.config.items(types_section))
-        self.qif_assets = dict(self.config.items(assets_section))
-        self.qif_liabilities = dict(self.config.items(liabilities_section))
-        self.qif_revenues = dict(self.config.items(revenues_section))
-        self.qif_expenses = dict(self.config.items(expenses_section))
+        self.qif_filenames = dict(
+            self.config.items(self._accounting_filenames_section)
+        )
+        self.qif_types = dict(
+            self.config.items(self._accounting_types_section)
+        )
+        self.qif_assets = dict(
+            self.config.items(self._assets_section)
+        )
+        self.qif_liabilities = dict(
+            self.config.items(self._liabilities_section)
+        )
+        self.qif_revenues = dict(
+            self.config.items(self._revenues_section)
+        )
+        self.qif_expenses = dict(
+            self.config.items(self._expenses_section)
+        )
 
-    def set_unknowns_to_defaults(self):
+    # SETTING DEFAULTS
+    def _set_unknowns_to_defaults(self):
         """Set blank setting to the defaults."""
         if not self.mailbox:
-            self.mailbox = self.default_mailbox
+            self.mailbox = self._default_mailbox
         if not self.output_dir:
-            self.output_dir = self.default_output_dir
+            self.output_dir = self._default_output_dir
 
-    # INITIALIZATION
-    def __init__(self, filepath=''):
-        """Initialize powl config and set filepath if custom."""
-        if filepath:
-            self.filepath = filepath
-        else:
-            self.filepath = self.default_filepath
+    # READING AND LOADING
+    def read(self):
+        """Check if config exists and load all settings."""
+        self._get_configparser()
+        self._load_all_settings()
+        self._set_unknowns_to_defaults()
