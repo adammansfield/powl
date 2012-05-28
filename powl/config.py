@@ -7,14 +7,14 @@ import textwrap
 class Config:
     """Class for processing custom powl config file for settings."""
 
-    # DEFAULTS
-    _default_filepath = 'config.cfg'
-    _default_mailbox = 'inbox'
-    _default_output_dir = os.join(os.getcwd(), 'output')
-
     # CONSTANTS
+    config_filepath = 'config.cfg'
     _transaction_dir = 'transactions'
     _log_dir = 'logs'
+    
+    # DEFAULTS
+    _default_mailbox = 'inbox'
+    _default_output_dir = os.path.join(os.getcwd(), 'output')
 
     # CONFIG SECTIONS AND KEYS
     _email_section = 'Email'
@@ -32,18 +32,18 @@ class Config:
 
     # CONFIG FILE
     _config_section_keys = {
-        'email_section': self._email_section,
-        'email_address': self._email_address,
-        'email_password': self._email_password,
-        'email_mailbox': self._email_mailbox
-        'folders_section': self._folders_section,
-        'folders_output': self._folders_output
-        'accounting_filenames_section': self._accounting_filenames_section,
-        'accounting_types_section': self._accounting_types_section,
-        'assets_section': self._assets_section,
-        'liabilities_section': self._liabilities_section,
-        'revenues_section': self._revenues_section,
-        'expenses_section': self._expenses_section
+        'email_section': _email_section,
+        'email_address': _email_address,
+        'email_password': _email_password,
+        'email_mailbox': _email_mailbox,
+        'folders_section': _folders_section,
+        'folders_output': _folders_output,
+        'accounting_filenames_section': _accounting_filenames_section,
+        'accounting_types_section': _accounting_types_section,
+        'assets_section': _assets_section,
+        'liabilities_section': _liabilities_section,
+        'revenues_section': _revenues_section,
+        'expenses_section': _expenses_section
     }
     config_template = textwrap.dedent("""\
         [{email_section}]
@@ -64,7 +64,7 @@ class Config:
 
         [{revenues_section}] 
 
-        [{expenses_section}]""".format(_config_section_keys) 
+        [{expenses_section}]""".format(**_config_section_keys) 
     )
 
     # FILE I/O
@@ -93,51 +93,46 @@ class Config:
                                          self._email_password)
         self.mailbox = self._config.get(self._email_section,
                                         self._email_mailbox)
+        if not self.mailbox:
+            self.mailbox = self._default_mailbox
 
     def _load_folders_settings(self):
         """Load the settings from the paths section."""
-        self.output_dir = self.config.get(self._folders_section,
-                                          self._folders_output)
-        self.log_dir = os.join(self.output_dir, self._log_dir)
-        self.qif_dir = os.join(self.output_dir, self._transactions_dir)
+        self.output_dir = self._config.get(self._folders_section,
+                                           self._folders_output)
+        if not self.output_dir:
+            self.output_dir = self._default_output_dir
+        self.log_dir = os.path.join(self.output_dir, self._log_dir)
+        self.transaction_dir = os.path.join(self.output_dir, self._transaction_dir)
         self.directories = [
             self.output_dir,
             self.log_dir,
-            self.qif_dir
+            self.transaction_dir
         ]
 
     def _load_qif_settings(self):
         """Load the settings from the qif sections."""
         self.qif_filenames = dict(
-            self.config.items(self._accounting_filenames_section)
+            self._config.items(self._accounting_filenames_section)
         )
         self.qif_types = dict(
-            self.config.items(self._accounting_types_section)
+            self._config.items(self._accounting_types_section)
         )
         self.qif_assets = dict(
-            self.config.items(self._assets_section)
+            self._config.items(self._assets_section)
         )
         self.qif_liabilities = dict(
-            self.config.items(self._liabilities_section)
+            self._config.items(self._liabilities_section)
         )
         self.qif_revenues = dict(
-            self.config.items(self._revenues_section)
+            self._config.items(self._revenues_section)
         )
         self.qif_expenses = dict(
-            self.config.items(self._expenses_section)
+            self._config.items(self._expenses_section)
         )
-
-    # SETTING DEFAULTS
-    def _set_unknowns_to_defaults(self):
-        """Set blank setting to the defaults."""
-        if not self.mailbox:
-            self.mailbox = self._default_mailbox
-        if not self.output_dir:
-            self.output_dir = self._default_output_dir
 
     # READING AND LOADING
     def read(self):
         """Check if config exists and load all settings."""
         self._get_configparser()
         self._load_all_settings()
-        self._set_unknowns_to_defaults()
