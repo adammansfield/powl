@@ -1,3 +1,4 @@
+import errno
 import logging
 import os
 import time
@@ -81,25 +82,28 @@ def set_stream_handler():
 def set_file_handler(directory):
     """Set file, level, and format for the log to file messages."""
     global _logger, _filename, _level, _formatter
-    if not os.path.isdir(directory):
+    try:
         os.makedirs(directory)
-    filepath = os.join(directory, _filename)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+    filepath = os.path.join(directory, _filename)
     handler = logging.FileHandler(filepath)
     handler.setLevel(_level)
     handler.setFormatter(_formatter)
     _logger.addHandler(handler)
 
 # INITIALIZATION
-def initialize(format_type=_DEFAULT_FORMAT, _level=_DEFAULT_LEVEL):
+def initialize(format_type=_DEFAULT_FORMAT, level=_DEFAULT_LEVEL):
     """Get a logger and set stream and file handlers."""
     global _logger, _filename, _formatter, _level
     _level = level
     _logger = logging.getLogger()
     _logger.setLevel(_level) 
-    if format_type == FORMAT_TYPE_DAILY:
+    if format_type == FORMAT_DAILY:
         _formatter = _DAILY_FORMATTER
         _filename = _DAILY_FILENAME
-    elif format_type == FORMAT_TYPE_WEEKLY:
+    elif format_type == FORMAT_WEEKLY:
         _formatter = _WEEKLY_FORMATTER
         _filename = _WEEKLY_FILENAME
     else:
