@@ -10,52 +10,16 @@ from powl import logger
 class Transaction:
     """A transaction processor for QIF files."""
 
+    # TEMPLATES
     def get_templates(self):
-        # TODO: return list of tuples for filename:template
-        #       Use this list in main.py to pass to output.py to
-        #       create folders.
-        files = [ 
-
-
-        pass
-
-
-
-    # FILE SYSTEM CHECKING
-    def check_filesystem_for_files(self):
-        """Check for and create missing files and folders."""
-        self.create_folder_if_missing()
-        self.create_files_if_missing()
-
-    def create_folder_if_missing(self):
-        """Create a transaction folder if it does not exist."""
-        if not os.path.isdir(self.transaction_dir):
-            os.makedirs(self.transaction_dir)
-
-    def create_files_if_missing(self):
-        """Create QIF files with headers if they do not exist."""
-        for account_key, filename in self.filenames.iteritems():
-            filepath = os.path.join(self.transaction_dir, filename)
-            if not os.path.isfile(filepath):
-                account_name = self.accounts.get(account_key)
-                account_type = self.types.get(account_key)
-                self.create_transaction_file(filepath, account_name, account_type)
-
-    # FILE APPENDING
-    def append_to_file(self, filepath, data):
-        file = open(filepath, 'a')
-        file.write(data)
-        file.close()
-
-    def create_transaction_file(self, filepath, account_name, account_type):
-        """Create a QIF file for capturing transactions."""
-        header = self.qif_format_header(account_name, account_type)
-        self.append_to_file(filepath, header)
-
-    def append_transaction_to_file(self, filename, transaction):
-        """Append a formatted transaction to the specified file."""
-        filepath = self.transaction_dir + os.sep + filename 
-        self.append_to_file(filepath, transaction)
+        templates = []
+        for key, filename in self.filenames.iteritems():
+            account_name = self.accounts.get(key)
+            account_type = self.types.get(key)
+            header = self.qif_format_header(account_name, account_type)
+            template = (filename, header)
+            templates.append(template)
+        return templates
 
     # TRANSACTION PROCESSING
     def process(self, date, debit, credit, amount, memo):
@@ -201,7 +165,7 @@ class Transaction:
         logger.error(logmsg)
 
     # INITIALIZATION
-    def __init__(self, filenames, types, assets, liabilities, revenues, expenses, output_path=""):
+    def __init__(self, filenames, types, assets, liabilities, revenues, expenses):
         """Set the paths used for transaction files."""
         self.filenames = filenames
         self.types = types
@@ -213,5 +177,3 @@ class Transaction:
                              self.liabilities.items() +
                              self.revenues.items() +
                              self.expenses.items())
-        if output_path:
-            self.transaction_dir = output_path + os.sep + 'transactions'
