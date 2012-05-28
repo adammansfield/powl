@@ -16,7 +16,7 @@ import powl.output as output
 from powl.config import Config
 from powl.processors.transaction import Transaction
 
-class Powl:
+class Controller:
     """Class for processing emails to do a corresponding action."""
 
     # Email Processing
@@ -91,28 +91,29 @@ class Powl:
 
 
 
-    # DIRECTORIES AND TEMPLATES
-    def _create_directories():
+    # FILE I/O
+    def _create_directories(self):
         """Create the configured directories if they do not exist."""
         output.makedir(self.config.directories)
 
-    def _create_transaction_templates():
+    def _create_transaction_templates(self):
         """Create transaction templates if files do not exist."""
         templates = self.transaction.get_templates()
         for filename, template in templates:
-            if not os.isfile(filename):
-                output.write(filename, template)
+            filepath = os.path.join(self.config.transaction_dir, filename)
+            if not os.path.isfile(filepath):
+                output.write(filepath, template)
          
     # LOADING
-    def _load_config():
+    def _load_config(self):
         """Load the configuration settings."""
         self.config = Config()
-        if not os.isfile(filename):
+        if not os.path.isfile(self.config.config_filepath):
             output.write(self.config.config_filepath,
                          self.config_file_layout)
         self.config.read()
 
-    def _load_processors():
+    def _load_processors(self):
         """Load the processors with custom config settings."""
         self.transaction = Transaction(self.config.qif_filenames,
                                        self.config.qif_types,
@@ -124,7 +125,7 @@ class Powl:
     # INITIALIZATION
     def __init__(self):
         """Setup and process email inbox."""
-        logger.initialize(logger.WEEKLY_FORMAT_TYPE)
+        logger.initialize(logger.FORMAT_WEEKLY)
         self._load_config()
         self._create_directories()
         logger.set_file_handler(self.config.log_dir)
