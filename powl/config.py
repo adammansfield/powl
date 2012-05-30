@@ -13,11 +13,13 @@ class Config:
     _log_dir = 'logs'
     
     # DEFAULTS
+    _default_server = 'imap.gmail.com'
     _default_mailbox = 'inbox'
     _default_output_dir = os.path.join(os.getcwd(), 'output')
 
     # CONFIG SECTIONS AND KEYS
     _email_section = 'Email'
+    _email_server = 'server'
     _email_address = 'address'
     _email_password = 'password'
     _email_mailbox = 'mailbox'
@@ -33,6 +35,7 @@ class Config:
     # CONFIG FILE
     _config_section_keys = {
         'email_section': _email_section,
+        'email_server': _email_server,
         'email_address': _email_address,
         'email_password': _email_password,
         'email_mailbox': _email_mailbox,
@@ -47,6 +50,7 @@ class Config:
     }
     config_template = textwrap.dedent("""\
         [{email_section}]
+        {email_server}=
         {email_address}=
         {email_password}=
         {email_mailbox}=
@@ -87,6 +91,10 @@ class Config:
 
     def _load_email_settings(self):
         """Load the settings from the email section."""
+        self.server = self._config.get(self._email_section,
+                                       self._email_server)
+        if not self.server:
+            self.server = self._default_server
         self.address = self._config.get(self._email_section,
                                         self._email_address)
         self.password = self._config.get(self._email_section,
