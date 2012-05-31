@@ -34,6 +34,7 @@ class Mail:
     class ServerUnknownError(MailError): pass
     class ServerTimedOutError(MailError): pass
     class LoginFailure(MailError): pass
+    class MailboxSelectionError(MailError): pass
 
 
     def get_messages(self):
@@ -75,6 +76,21 @@ class Mail:
             logger.error(e)
             sys.exit(e)
 
+    def _get_imap(self):
+        """Attempt to get imap object."""
+        if not self._server:
+            raise self.EmptyServer("Imap server has not been set.")
+        else:
+            try:
+                self._imap = imaplib.IMAP4_SSL(self._server)
+            except socket.gaierror as (code, message):
+                if code == socket.EAI_NONAME:
+                    message = self._server + " not found."
+                    raise self.ServerUnknownError(message)
+            except socket.timeout:
+                message = self._server + " has timed out."
+                raise self.ServerTimedOutError(message)
+
     def _login(self):
         """Login to imap server and select mailbox."""
         if not self._address:
@@ -92,27 +108,17 @@ class Mail:
                     )
                     raise self.LoginFailure(message)
 
-    def _get_imap(self):
-        """Attempt to get imap object."""
-        if not self._server:
-            raise self.EmptyServer("Imap server has not been set.")
-        else:
-            try:
-                self._imap = imaplib.IMAP4_SSL(self._server)
-            except socket.gaierror as (code, message):
-                if code == socket.EAI_NONAME:
-                    message = self._server + " not found."
-                    raise self.ServerUnknownError(message)
-            except socket.timeout:
-                message = self._server + " has timed out."
-                raise self.ServerTimedOutError(message)
+    def _select_mailbox(self):
+        """Select a mailbox from the imap object."""
+        status, result = self._imap.select(self._mailbox)
+        if "NO" in status:
+            message = self._mailbox + " is not a valid mailbox."
+            raise self.MailboxSelectionError(message)
 
     # INTIALIZATION
-    def __init__(self, server, address, password):
+    def __init__(self, server, address, password, mailbox='inbox'):
         self._server = server
         self._address = address
         self._password = password
+        self._mailbox = mailbox
         socket.setdefaulttimeout(self._timeout)
-#
-#
-#        self.imap.select(self.config.mailbox)
