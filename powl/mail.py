@@ -27,14 +27,13 @@ class Mail:
     _timeout = 5
 
     # EXCEPTIONS
-    class MailError(Exception):
-        pass
-
-    class ServerUnknownError(MailError):
-        pass
-
-    class ServerTimedOutError(MailError):
-        pass
+    class MailError(Exception): pass
+    class EmptyServer(MailError): pass
+    class EmptyAddress(MailError): pass
+    class EmptyPassword(MailError): pass
+    class ServerUnknownError(MailError): pass
+    class ServerTimedOutError(MailError): pass
+    class LoginFailure(MailError): pass
 
 
     def get_messages(self):
@@ -78,18 +77,35 @@ class Mail:
 
     def _login(self):
         """Login to imap server and select mailbox."""
+        if not self._address:
+            raise self.EmptyAddress("Empty Address.")
+        elif not self._password:
+            raise self.EmptyPassword("Empty Password.")
+        else:
+            try:    
+                self._imap.login(self._address, self._password)
+            except imaplib.IMAP4.error as e:
+                if "Invalid credentials" in str(e):
+                    message = (
+                        "{0} {1} are invalid creditials.".format(self._address,
+                                                                 self._password)
+                    )
+                    raise self.LoginFailure(message)
 
     def _get_imap(self):
         """Attempt to get imap object."""
-        try:
-            self.imap = imaplib.IMAP4_SSL(self._server)
-        except socket.gaierror as (code, message):
-            if code == socket.EAI_NONAME:
-                message = self._server + " not found."
-                raise self.ServerUnknownError(message)
-        except socket.timeout:
-            message = self._server + " has timed out."
-            raise self.ServerTimedOutError(message)
+        if not self._server:
+            raise self.EmptyServer("Imap server has not been set.")
+        else:
+            try:
+                self._imap = imaplib.IMAP4_SSL(self._server)
+            except socket.gaierror as (code, message):
+                if code == socket.EAI_NONAME:
+                    message = self._server + " not found."
+                    raise self.ServerUnknownError(message)
+            except socket.timeout:
+                message = self._server + " has timed out."
+                raise self.ServerTimedOutError(message)
 
     # INTIALIZATION
     def __init__(self, server, address, password):
@@ -99,8 +115,4 @@ class Mail:
         socket.setdefaulttimeout(self._timeout)
 #
 #
-#        try:    
-#            self.imap.login(self.config.address, self.config.password)
-#        except imaplib.IMAP4.error as e:
-#            raise
 #        self.imap.select(self.config.mailbox)
