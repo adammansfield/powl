@@ -23,6 +23,9 @@ import powl.logger as logger
 class Mail:
     """To get email from a mailbox and to send emails."""
 
+    # CONSTANTS
+    _timeout = 5
+
     # EXCEPTIONS
     class MailError(Exception):
         pass
@@ -66,10 +69,12 @@ class Mail:
     # SETUP
     def setup(self):
         """Get imap server, login and select mailbox."""
-        pass
-        #try:
-        #    self._get_imap_object()
-        #except 
+        try:
+            self._get_imap()
+            self._login()
+        except MailError as e:
+            logger.error(e)
+            sys.exit(e)
 
     def _login(self):
         """Login to imap server and select mailbox."""
@@ -81,23 +86,17 @@ class Mail:
         except socket.gaierror as (code, message):
             if code == socket.EAI_NONAME:
                 message = self._server + " not found."
-                logger.error(message)
                 raise self.ServerUnknownError(message)
-        except socket.error as (code, message):
-            if code == errno.ETIMEDOUT:
-                message = self._server + " has timed out."
-                logger.error(message)
-                raise self.ServerTimedOutError(message)
+        except socket.timeout:
+            message = self._server + " has timed out."
+            raise self.ServerTimedOutError(message)
 
     # INTIALIZATION
     def __init__(self, server, address, password):
         self._server = server
         self._address = address
         self._password = password
-
-        #try:
-        #    self._get_imap_object()
-        #except
+        socket.setdefaulttimeout(self._timeout)
 #
 #
 #        try:    
