@@ -76,5 +76,22 @@ class MailTest(unittest.TestCase):
         expected = Mail.EmptyPassword
         self.assertRaises(expected, mail._login)
 
+    def test_login_config(self):
+        """Test login with config creditials and should succeed if correct."""
+        try:
+            config = Config()
+            config.read()
+        except Exception as e:
+            logger.error("Config.cfg was not found for intergation test.")
+            self.fail(e)
+        mail = Mail(config.server,
+                    config.address,
+                    config.password)
+        try:
+            mail._get_imap()
+            mail._login()
+        except Exception as e:
+            self.fail("Unexpected exception." + str(e))
+
 if __name__ == '__main__':
     unittest.main()
