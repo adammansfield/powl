@@ -2,7 +2,8 @@
 """To get email from a mailbox and to send emails."""
 #import ConfigParser
 #import email
-#import imaplib
+import errno
+import imaplib
 #import logging
 #import optparse
 #import os
@@ -12,19 +13,32 @@ import socket
 import sys
 #import textwrap
 #import time
-#import powl.logger as logger
+import powl.logger as logger
 #import powl.output as output
 #from powl.config import Config
 #from powl.processors.transaction import Transaction
 
+
+
 class Mail:
     """To get email from a mailbox and to send emails."""
+
+    # EXCEPTIONS
+    class MailError(Exception):
+        pass
+
+    class ServerUnknownError(MailError):
+        pass
+
+    class ServerTimedOutError(MailError):
+        pass
+
 
     def get_messages(self):
         """Get a list of unread email messages."""
 
 
-    # Email Processing
+    # FETCHING
     def process(self):
         """Parse through an inbox of emails."""
         search_response, email_ids = self.imap.search(None, "(Unseen)")
@@ -49,26 +63,45 @@ class Mail:
         retval = retval.replace('&amp;','&')
         return retval
 
+    # SETUP
+    def setup(self):
+        """Get imap server, login and select mailbox."""
+        pass
+        #try:
+        #    self._get_imap_object()
+        #except 
+
     def _login(self):
         """Login to imap server and select mailbox."""
 
-    def _get_imap_object(self):
+    def _get_imap(self):
         """Attempt to get imap object."""
         try:
-            self.imap = imaplib.IMAP4_SSL(server)
-        except socket.gaierror as e:
-            message = e + ' for ' + server
-            logger.info(message)
-            sys.exit(message)
-        except socket.error as e:
-            message = e + ' for ' + server
-            logger.info(message)
-            sys.exit(message)
+            self.imap = imaplib.IMAP4_SSL(self._server)
+        except socket.gaierror as (code, message):
+            if code == socket.EAI_NONAME:
+                message = self._server + " not found."
+                logger.error(message)
+                raise self.ServerUnknownError(message)
+        except socket.error as (code, message):
+            if code == errno.ETIMEDOUT:
+                message = self._server + " has timed out."
+                logger.error(message)
+                raise self.ServerTimedOutError(message)
 
     # INTIALIZATION
     def __init__(self, server, address, password):
-        try:    
-            self.imap.login(self.config.address, self.config.password)
-        except imaplib.IMAP4.error as e:
-            raise
-        self.imap.select(self.config.mailbox)
+        self._server = server
+        self._address = address
+        self._password = password
+
+        #try:
+        #    self._get_imap_object()
+        #except
+#
+#
+#        try:    
+#            self.imap.login(self.config.address, self.config.password)
+#        except imaplib.IMAP4.error as e:
+#            raise
+#        self.imap.select(self.config.mailbox)
