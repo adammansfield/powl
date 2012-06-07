@@ -134,11 +134,11 @@ class MailTest(unittest.TestCase):
             try:
                 config = Config()
                 config.read()
-                self.config_isread = True
                 self.config_server = config.server
                 self.config_address = config.address
                 self.config_password = config.password
                 self.config_mailbox = config.mailbox
+                self.config_isread = True
             except Exception as e:
                 logger.error("Config.cfg was not found for intergation test.")
                 self.fail(e)

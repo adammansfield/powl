@@ -38,10 +38,6 @@ class Mail:
     class MailboxSelectionError(MailError): pass
 
 
-    def get_messages(self):
-        """Get a list of unread email messages."""
-
-
     # FETCHING
     def process(self):
         """Parse through an inbox of emails."""
@@ -58,6 +54,22 @@ class Mail:
                     logger.debug('EMAIL   %s', message.strip())
                     self.parse_message(message, date)
 
+    def get_messages(self):
+        """Get a list of unread email messages."""
+        ids = self._get_email_ids()
+
+
+    
+    def _get_email_ids(self, charset=None, criteria="(Unseen)"):
+        """Get a list of email ids for messages."""
+        response, ids = self.imap.search(charset, criteria)
+        id_string = ids[0]
+        id_list = id_string.split()
+        return id_list
+
+    def _get_
+
+    # MARKUP CLEANUP
     def _strip_message_markup(self, message):
         """Return message striped of markup."""
         retval = message
