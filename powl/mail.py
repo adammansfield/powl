@@ -44,8 +44,10 @@ class Mail:
         search_response, email_ids = self.imap.search(None, "(Unseen)")
         logger.info("PROCESSING INBOX")
         for email_id in email_ids[0].split():
+
             fetch_response, data = self.imap.fetch(email_id, "(RFC822)")
             mail = email.message_from_string(data[0][1])
+
             date = email.utils.parsedate(mail['Date'])
             for part in mail.walk():
                 if part.get_content_type() == 'text/html':
@@ -56,7 +58,7 @@ class Mail:
 
     def get_messages(self):
         """Get a list of unread email messages."""
-        ids = self._get_email_ids()
+        id_list = self._get_email_id_list()
 
 
     
@@ -67,7 +69,11 @@ class Mail:
         id_list = id_string.split()
         return id_list
 
-    def _get_
+    def _get_email_date(self, mail)
+        """Return the date of the input email."""
+        field = 'Date'
+        date = email.utils.parsedate(mail[field])
+        return date
 
     # MARKUP CLEANUP
     def _strip_message_markup(self, message):
