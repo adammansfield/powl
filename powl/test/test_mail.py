@@ -17,7 +17,6 @@ class MailTest(unittest.TestCase):
     fake_mailbox = 'k8d3bka9i'
     gmail_server = 'imap.gmail.com'
     gmail_mailbox = 'inbox'
-    nonimap_server = 'google.ca'
 
     # CONFIG ON DATA
     config_isread = False
@@ -40,14 +39,6 @@ class MailTest(unittest.TestCase):
             mail._get_imap()
         except Exception as e:
             self.fail(e)
-
-    def test_imap_timeout(self):
-        """Test imap timeout."""
-        mail = Mail(self.nonimap_server,
-                    self.empty_address,
-                    self.empty_password)
-        expected = Mail.ServerTimedOutError
-        self.assertRaises(expected, mail._get_imap)
 
     def test_imap_unknown(self):
         """Test imap with an unknown address."""

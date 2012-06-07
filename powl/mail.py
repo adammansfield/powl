@@ -33,6 +33,7 @@ class Mail:
     class EmptyPassword(MailError): pass
     class ServerUnknownError(MailError): pass
     class ServerTimedOutError(MailError): pass
+    class ServerUnreachableError(MailError): pass
     class LoginFailure(MailError): pass
     class MailboxSelectionError(MailError): pass
 
@@ -87,6 +88,10 @@ class Mail:
                 if code == socket.EAI_NONAME:
                     message = self._server + " not found."
                     raise self.ServerUnknownError(message)
+            except socket.error as (code, message):
+                if code == errno.ENETUNREACH:
+                    message = self._server + " not found."
+                    raise self.ServerUnreachableError(message)
             except socket.timeout:
                 message = self._server + " has timed out."
                 raise self.ServerTimedOutError(message)
