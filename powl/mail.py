@@ -59,15 +59,28 @@ class Mail:
     def get_messages(self):
         """Get a list of unread email messages."""
         id_list = self._get_email_id_list()
+        mail_list = self._fetch_emails(id_list)
 
 
     
     def _get_email_ids(self, charset=None, criteria="(Unseen)"):
         """Get a list of email ids for messages."""
-        response, ids = self.imap.search(charset, criteria)
-        id_string = ids[0]
+        response, result = self._imap.search(charset, criteria)
+        id_string = result[0]
         id_list = id_string.split()
         return id_list
+
+    def _fetch_emails(self, id_list):
+        """Return email objects fetched using the id list parameter."""
+        message_part = "(RFC822)"
+        mail_list = []
+        for email_id in id_list:
+            response, result = self._imap.fetch(email_id, message_part)
+            data = result[0]
+            mail_string = data[1]
+            mail_object = email.message_from_string(mail_string)
+            mail_list.append(mail_object)
+        return mail_list
 
     def _get_email_date(self, mail)
         """Return the date of the input email."""
