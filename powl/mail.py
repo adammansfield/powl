@@ -24,6 +24,7 @@ class Mail:
     """To get email from a mailbox and to send emails."""
 
     # CONSTANTS
+    _message_part = '(RFC822)'
     _timeout = 5
 
     # EXCEPTIONS
@@ -44,11 +45,10 @@ class Mail:
         search_response, email_ids = self.imap.search(None, "(Unseen)")
         logger.info("PROCESSING INBOX")
         for email_id in email_ids[0].split():
-
             fetch_response, data = self.imap.fetch(email_id, "(RFC822)")
             mail = email.message_from_string(data[0][1])
-
             date = email.utils.parsedate(mail['Date'])
+            # done up till here
             for part in mail.walk():
                 if part.get_content_type() == 'text/html':
                     body = part.get_payload()
@@ -57,36 +57,48 @@ class Mail:
                     self.parse_message(message, date)
 
     def get_messages(self):
-        """Get a list of unread email messages."""
+        """Get a list of tuples of unread email messages and their dates."""
         id_list = self._get_email_id_list()
         mail_list = self._fetch_emails(id_list)
+        message_list = self._parse_email_message(mail_list)
+        date_list = self._parse_email_date(mail_list)
 
-
-    
     def _get_email_ids(self, charset=None, criteria="(Unseen)"):
         """Get a list of email ids for messages."""
-        response, result = self._imap.search(charset, criteria)
-        id_string = result[0]
+        result, response = self._imap.search(charset, criteria)
+        id_string = response[0]
         id_list = id_string.split()
         return id_list
 
     def _fetch_emails(self, id_list):
         """Return email objects fetched using the id list parameter."""
-        message_part = "(RFC822)"
         mail_list = []
         for email_id in id_list:
-            response, result = self._imap.fetch(email_id, message_part)
-            data = result[0]
-            mail_string = data[1]
+            result, response = self._imap.fetch(email_id, self._message_part)
+            mail_data = response[0]
+            mail_string = mail_data[1]
             mail_object = email.message_from_string(mail_string)
             mail_list.append(mail_object)
         return mail_list
 
-    def _get_email_date(self, mail)
-        """Return the date of the input email."""
-        field = 'Date'
-        date = email.utils.parsedate(mail[field])
-        return date
+    def _parse_email_messages(self, mail_list):
+        """Return a list of messages parsed from the mail list."""
+        message_list = []
+        for mail in mail_list:
+            for part in mail.walk():
+                if part.get_content_type() == 'text/html':
+                    body = part.get_payload()
+                    message = self._strip_message_markup(body)
+                    message_list.append(message)
+        return message_list
+
+    def _parse_email_date(self, mail_list):
+        """Return a list of dates parsed from the mail list."""
+        date_list = []
+        for mail in mail_list:
+            date = email.utils.parsedate(mail['Date'])
+            date_list.append(date)
+        return date_list
 
     # MARKUP CLEANUP
     def _strip_message_markup(self, message):
