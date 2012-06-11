@@ -73,6 +73,9 @@ class Controller:
         
     def process_transaction(self, params, date):
         """Separate transaction data to pass onto processing."""
+        #debit, credit, amount, memo = self.message.transaction(params)
+        #filename, data = self.transaction.process(date, debit, credit, amount, memo)
+        #output.append(filename, data)
         params = re.split(' -', params)
         for param in params:
             param = param.strip()
@@ -87,6 +90,8 @@ class Controller:
                 memo = memo.replace("\"", '')
                 memo = memo.strip()
         self.transaction.process(date, debit, credit, amount, memo)
+
+    
 
 
 
