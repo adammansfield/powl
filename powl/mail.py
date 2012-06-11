@@ -1,31 +1,15 @@
 #!/usr/bin/env python
 """To get email from a mailbox and to send emails."""
-#import ConfigParser
-#import email
+import email
 import errno
 import imaplib
-#import logging
-#import optparse
-#import os
-#import re
-#import shutil
 import socket
 import sys
-#import textwrap
-#import time
 import powl.logger as logger
-#import powl.output as output
-#from powl.config import Config
-#from powl.processors.transaction import Transaction
-
 
 
 class Mail:
     """To get email from a mailbox and to send emails."""
-
-    # CONSTANTS
-    _message_part = '(RFC822)'
-    _timeout = 5
 
     # EXCEPTIONS
     class MailError(Exception): pass
@@ -38,30 +22,19 @@ class Mail:
     class LoginFailure(MailError): pass
     class MailboxSelectionError(MailError): pass
 
+    # CONSTANTS
+    _message_part = '(RFC822)'
+    _timeout = 5
 
     # FETCHING
-    def process(self):
-        """Parse through an inbox of emails."""
-        search_response, email_ids = self.imap.search(None, "(Unseen)")
-        logger.info("PROCESSING INBOX")
-        for email_id in email_ids[0].split():
-            fetch_response, data = self.imap.fetch(email_id, "(RFC822)")
-            mail = email.message_from_string(data[0][1])
-            date = email.utils.parsedate(mail['Date'])
-            # done up till here
-            for part in mail.walk():
-                if part.get_content_type() == 'text/html':
-                    body = part.get_payload()
-                    message = self.strip_message_markup(body)
-                    logger.debug('EMAIL   %s', message.strip())
-                    self.parse_message(message, date)
-
     def get_messages(self):
         """Get a list of tuples of unread email messages and their dates."""
         id_list = self._get_email_id_list()
         mail_list = self._fetch_emails(id_list)
         message_list = self._parse_email_message(mail_list)
         date_list = self._parse_email_date(mail_list)
+        combined_list = zip(message_list, date_list)
+        return combined_list
 
     def _get_email_ids(self, charset=None, criteria="(Unseen)"):
         """Get a list of email ids for messages."""
@@ -81,6 +54,7 @@ class Mail:
             mail_list.append(mail_object)
         return mail_list
 
+    # PARSING
     def _parse_email_messages(self, mail_list):
         """Return a list of messages parsed from the mail list."""
         message_list = []
@@ -88,7 +62,8 @@ class Mail:
             for part in mail.walk():
                 if part.get_content_type() == 'text/html':
                     body = part.get_payload()
-                    message = self._strip_message_markup(body)
+                    message = self._strip_message_markup(body).strip()
+                    logger.debug('EMAIL   %s', message)
                     message_list.append(message)
         return message_list
 
@@ -100,7 +75,6 @@ class Mail:
             date_list.append(date)
         return date_list
 
-    # MARKUP CLEANUP
     def _strip_message_markup(self, message):
         """Return message striped of markup."""
         retval = message
@@ -110,7 +84,7 @@ class Mail:
         retval = retval.replace('&amp;','&')
         return retval
 
-    # SETUP
+    # IMAP SETUP
     def setup(self):
         """Get imap server, login and select mailbox."""
         try:
@@ -158,8 +132,8 @@ class Mail:
 
     def _select_mailbox(self):
         """Select a mailbox from the imap object."""
-        status, result = self._imap.select(self._mailbox)
-        if "NO" in status:
+        result, response = self._imap.select(self._mailbox)
+        if "NO" in response:
             message = self._mailbox + " is not a valid mailbox."
             raise self.MailboxSelectionError(message)
 
