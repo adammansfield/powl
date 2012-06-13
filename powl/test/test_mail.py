@@ -127,9 +127,20 @@ class MailTest(unittest.TestCase):
         except Exception as e:
             self.fail("Unexpected exception. " + str(e))
 
+    # MESSAGES
+    def test_markup_strip(self):
+        mail = Mail(self.empty_server, 
+                    self.empty_address,
+                    self.empty_password)
+        teststring = "<P>This is a test string.=0AA &amp; B.</P>"
+        expected = "This is a test string. A & B."
+        actual = mail._strip_message_markup(teststring)
+        self.assertEqual(expected, actual)
+
     # HELPER FUNCTIONS
     def _get_config_creditials(self):
-        """Get server, address, and password creditials from config file."""
+        """Get server, address, and password creditials from config file.
+           Using this instead of setup since not needed each time."""
         if not self.config_isread:
             try:
                 config = Config()

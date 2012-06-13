@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""To get email from a mailbox and to send emails."""
+"""Send and receive emails."""
 import email
 import errno
 import imaplib
@@ -9,7 +9,6 @@ import powl.logger as logger
 
 
 class Mail:
-    """To get email from a mailbox and to send emails."""
 
     # EXCEPTIONS
     class MailError(Exception): pass
