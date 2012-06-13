@@ -8,7 +8,6 @@ import time
 from powl import logger
 
 class Transaction:
-    """A transaction processor for QIF files."""
 
     # TEMPLATES
     def get_templates(self):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Safely output to the filesystem."""
+"""Safe output to the filesystem."""
 import errno
 import os
 

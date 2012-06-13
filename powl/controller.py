@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Process an email inbox to do a correpsonding action with each message."""
+"""Initialize, start and handle module interaction."""
 import ConfigParser
 import email
 import imaplib
@@ -17,7 +17,6 @@ from powl.config import Config
 from powl.transaction import Transaction
 
 class Controller:
-    """Class for processing emails to do a corresponding action."""
 
     # Email Processing
     def start(self):

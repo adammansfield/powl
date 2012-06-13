@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+"""Module for easily directing logging output to streams and files."""
 import errno
 import logging
 import os

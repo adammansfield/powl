@@ -1,11 +1,10 @@
 #!/usr/bin/env python
-"""Load configuration settings for powl."""
+"""Load and store configuration settings."""
 import ConfigParser
 import os
 import textwrap
 
 class Config:
-    """Class for processing custom powl config file for settings."""
 
     # CONSTANTS
     config_filepath = 'config.cfg'
