@@ -14,13 +14,13 @@ import time
 import powl.logger as logger
 import powl.output as output
 from powl.config import Config
-from powl.processors.transaction import Transaction
+from powl.transaction import Transaction
 
 class Controller:
     """Class for processing emails to do a corresponding action."""
 
     # Email Processing
-    def process(self):
+    def start(self):
         """Parse through an inbox of emails."""
         self.imap = imaplib.IMAP4_SSL("imap.gmail.com")
         self.imap.login(self.config.address, self.config.password)

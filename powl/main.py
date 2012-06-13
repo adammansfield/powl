@@ -6,7 +6,7 @@ from powl.controller import Controller
 def main(*args):
     """Create an instance of powl and process a mailbox."""
     controller = Controller()
-    controller.process()
+    controller.start()
 
 if __name__ == '__main__':
     main(*sys.argv[1:])
