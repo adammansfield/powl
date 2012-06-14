@@ -95,5 +95,20 @@ class ProcessorTest(unittest.TestCase):
         debit, credit, amount, actual = self.processor.parse_transaction(data)
         self.assertEqual(expected, actual)
 
+    # BODY COMPOSITION PARSING
+    def test_parse_bodycomposition_mass(self):
+        """Test bodycomposition parser for expected mass."""
+        data = "-m 200.1 -f 15.2"
+        expected = '200.1'
+        actual, fat = self.processor.parse_bodycomposition(data)
+        self.assertEqual(expected, actual)
+
+    def test_parse_bodycomposition_fat(self):
+        """Test bodycomposition parser for expected fat percentage."""
+        data = "-m 200.1 -f 15.2"
+        expected = '15.2'
+        mass, actual = self.processor.parse_bodycomposition(data)
+        self.assertEqual(expected, actual)
+
 if __name__ == '__main__':
     unittest.main()
