@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Parse actions and processing for simpler actions."""
+import re
 
 class Processor:
 
@@ -26,3 +27,21 @@ class Processor:
             action = self.action_nomatch
             data = message
         return action, data
+
+    def parse_transaction(self, data):
+        """Parse a transaction data into debit, credit, amount and memo."""
+        params = re.split('-', data)
+        for param in params:
+            param = param.strip()
+            if re.match('^d', param):
+                debit = param.replace('d ','')
+            elif re.match('c', param):
+                credit = param.replace('c ','')
+            elif re.match('a', param):
+                amount = param.replace('a ','')
+            elif re.match('m', param):
+                memo = param.replace('m ','')
+                memo = memo.replace("\"", '')
+                memo = memo.strip()
+        return debit, credit, amount, memo
+
