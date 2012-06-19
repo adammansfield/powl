@@ -81,7 +81,7 @@ def set_stream_handler():
     handler.setFormatter(_formatter)
     _logger.addHandler(handler)
 
-def set_file_handler(directory):
+def set_file_handler(directory=_DEFAULT_DIR):
     """Set file, level, and format for the log to file messages."""
     global _logger, _filename, _level, _formatter
     try:
