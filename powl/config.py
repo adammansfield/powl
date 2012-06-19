@@ -7,7 +7,7 @@ import textwrap
 class Config:
 
     # CONSTANTS
-    config_filepath = 'config.cfg'
+    _config_filepath = 'config.cfg'
     _transaction_dir = 'transactions'
     _log_dir = 'logs'
     
@@ -47,7 +47,7 @@ class Config:
         'revenues_section': _revenues_section,
         'expenses_section': _expenses_section
     }
-    config_template = textwrap.dedent("""\
+    _config_template = textwrap.dedent("""\
         [{email_section}]
         {email_server}=
         {email_address}=
@@ -138,8 +138,13 @@ class Config:
             self._config.items(self._expenses_section)
         )
 
-    # READING AND LOADING
+    #  CHECKING, READING, LODAING
     def read(self):
         """Check if config exists and load all settings."""
         self._get_configparser()
         self._load_all_settings()
+
+    def check_file(self):
+        if not os.path.isfile(self.config.config_filepath):
+            output.write(self._config_filepath,
+                         self._config_template)
