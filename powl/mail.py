@@ -26,11 +26,11 @@ class Mail:
     _timeout = 5
 
     # FETCHING
-    def get_messages(self):
+    def get_mail_list(self):
         """Get a list of tuples of unread email messages and their dates."""
-        id_list = self._get_email_id_list()
+        id_list = self._get_email_ids()
         mail_list = self._fetch_emails(id_list)
-        message_list = self._parse_email_message(mail_list)
+        message_list = self._parse_email_messages(mail_list)
         date_list = self._parse_email_date(mail_list)
         combined_list = zip(message_list, date_list)
         return combined_list
@@ -89,7 +89,8 @@ class Mail:
         try:
             self._get_imap()
             self._login()
-        except MailError as e:
+            self._select_mailbox()
+        except Mail.MailError as e:
             logger.error(e)
             sys.exit(e)
 
