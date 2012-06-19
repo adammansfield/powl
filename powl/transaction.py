@@ -33,16 +33,16 @@ class Transaction:
                                                           qif_transfer,
                                                           qif_amount,
                                                           qif_memo)
-            self.check_filesystem_for_files()
-            self.append_transaction_to_file(qif_filename, qif_transaction)
             self.log_transaction(qif_date,
                                  qif_filename,
                                  qif_transfer,
                                  qif_amount,
                                  qif_memo)
+            return qif_filename, qif_transaction
         else:
             # TODO: return an error for powl.py to handle
             logger.transaction_error(date, debit, credit, amount, memo)
+            return None, None
 
     # VALIDITY
     def valid_accounts(self, debit, credit):
