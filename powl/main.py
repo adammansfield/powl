@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 """Main script for running powl."""
 import sys
-from powl.controller import Controller
+from powl.app import App
 
 def main(*args):
     """Create an instance of powl and process a mailbox."""
-    controller = Controller()
-    controller.start()
+    app = App()
+    app.start()
 
 if __name__ == '__main__':
     main(*sys.argv[1:])
