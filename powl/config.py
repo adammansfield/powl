@@ -3,13 +3,13 @@
 import ConfigParser
 import os
 import textwrap
+import powl.output as output
 
 class Config:
 
     # CONSTANTS
     _config_filepath = 'config.cfg'
     _transaction_dir = 'transactions'
-    _log_dir = 'logs'
     
     # DEFAULTS
     _default_server = 'imap.gmail.com'
@@ -75,7 +75,7 @@ class Config:
         """Read from config file to get config parser."""
         self._config = ConfigParser.ConfigParser()
         try:
-            with open(self.config_filepath) as fp:
+            with open(self._config_filepath) as fp:
                 self._config.readfp(fp)
         except OSError as e:
             if e.errno != errno.EEXIST:
@@ -109,11 +109,9 @@ class Config:
                                            self._folders_output)
         if not self.output_dir:
             self.output_dir = self._default_output_dir
-        self.log_dir = os.path.join(self.output_dir, self._log_dir)
         self.transaction_dir = os.path.join(self.output_dir, self._transaction_dir)
         self.directories = [
             self.output_dir,
-            self.log_dir,
             self.transaction_dir
         ]
 
@@ -145,6 +143,6 @@ class Config:
         self._load_all_settings()
 
     def check_file(self):
-        if not os.path.isfile(self.config.config_filepath):
+        if not os.path.isfile(self._config_filepath):
             output.write(self._config_filepath,
                          self._config_template)
