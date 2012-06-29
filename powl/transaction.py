@@ -41,7 +41,7 @@ class Transaction:
             return qif_filename, qif_transaction
         else:
             # TODO: return an error for powl.py to handle
-            logger.transaction_error(date, debit, credit, amount, memo)
+            self.log_transaction_error(date, debit, credit, amount, memo)
             return None, None
 
     # VALIDITY
