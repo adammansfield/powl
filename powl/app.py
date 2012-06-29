@@ -16,7 +16,7 @@ import powl.output as output
 from powl.actions import Actions
 from powl.config import Config
 from powl.mail import Mail
-from powl.parser import MessageParser
+from powl.parser import Parser
 from powl.transaction import Transaction
 
 class App:
@@ -27,7 +27,8 @@ class App:
         self._mail.setup()
         mail_list = self._mail.get_mail_list()
         for message, date in mail_list:
-            self._actions.do_action(message, date)
+            action, data = self._parser.parse_message(message)
+            self._actions.do_action(action, data, date)
 
     # FILE I/O
     # TODO: this section move to data.py
@@ -79,6 +80,10 @@ class App:
                                 self._config.output_dir,
                                 self._config.transaction_dir)
 
+    def _setup_parser(self):
+        """Setup parser."""
+        self._parser = Parser()
+
     # INITIALIZATION
     def __init__(self):
         """Setup objects necessary for processing the email inbox."""
@@ -89,3 +94,4 @@ class App:
         self._create_transaction_templates() # TODO: move to data.py
         self._setup_mail()
         self._setup_actions()
+        self._setup_parser()
