@@ -1,7 +1,7 @@
 """Action to process a note."""
 from powl.actions.fileaction import FileAction
 
-class FileAction(FileAction):
+class Note(FileAction):
 
     # PROCESSING
     def process(self):
