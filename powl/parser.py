@@ -38,16 +38,3 @@ class Parser:
         memo = memo.strip()
         return debit, credit, amount, memo
 
-    def parse_bodycomposition(self, data):
-        """Parse a body composition data into mass and body fat percentage."""
-        mass = ''
-        fat = ''
-        params = re.split('-', data)
-        for param in params:
-            if re.match('^m', param):
-                mass = re.sub('^m', '', param)
-            elif re.match('^f', param):
-                fat = re.sub('^f', '', param)
-        mass = mass.strip()
-        fat = fat.strip()
-        return mass, fat
