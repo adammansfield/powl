@@ -1,29 +1,42 @@
 """Superclass for actions to output to a file."""
-import powl.output as output
+import errno
+import os
 from powl.actions.action import Action
 
 class FileAction(Action):
 
-    # PROCESSING
+    # I/O
     def output(self):
-        """Output the processed data through the specified means."""
+        """Output the processed data to the specified file."""
         if not self._output_filepath:
-            output.append(self._output_filepath, self._output_data)
+            self._file_append(self._output_filepath,
+                              self._output_data)
+
+    def _file_append(filepath, data):
+        """Safely append data to the specified file."""
+        try:
+            with open(filepath, 'a') as fp:
+                fp.write(data)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
 
     # INITIALIZATION
     def initialize(self):
+        """Empty initialize."""
+        pass
+
+    def initialize(self, directories):
         """Create output directories."""
         if not self.__directories:
-            output.makedir(self.__directories)
+            for directory in directories:
+                if not os.path.isdir(directory):
+                    self._makedir(directory)
 
-    def __init__(self):
-        """Set the initial values."""
-        super(FileAction, self).__init__()
-        self.__directories = None
-        self._output_filepath = None
-
-    def __init__(self, directories):
-        """Set the initial values and output directories."""
-        super(FileAction, self).__init__()
-        self.__directories = directories
-        self._output_filepath = None
+    def _makedir(self, directory):
+        """Safely make the specified directory."""
+        try:
+            os.makedirs(directory)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
