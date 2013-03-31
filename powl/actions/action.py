@@ -1,28 +1,26 @@
 """Superclass to perform actions with input data."""
 
-class Action:
+class Action(object):
     
-    # PROCESSING
+    # I/O
     def input(self, data, date):
-        """Set the data and date to be used."""
-        self._input_data = data
-        self._input_date = date
-
-    def process(self):
-        """Process the data into the proper output format."""
-        pass
+        """Parse the input data and date into usable parameters."""
+        raise NotImplementedError("Subclass must implement abstract method.")
 
     def output(self):
         """Output the processed data through the specified means."""
-        pass
+        raise NotImplementedError("Subclass must implement abstract method.")
+
+    # PROCESSING
+    def process(self):
+        """Process the data into the proper output format."""
+        raise NotImplementedError("Subclass must implement abstract method.")
 
     # INITIALIZATION
     def initialize(self):
         """Initialize any resources needed for output."""
-        pass
+        raise NotImplementedError("Subclass must implement abstract method.")
 
     def __init__(self):
         """Set the initial values."""
-        self._input_data = None
-        self._input_date = None
-        self._output_data = None
+        raise NotImplementedError("Subclass must implement abstract method.")
