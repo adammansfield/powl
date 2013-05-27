@@ -8,11 +8,11 @@ class FileAction(Action):
     # I/O
     def output(self):
         """Output the processed data to the specified file."""
-        if not self._output_filepath:
-            self._file_append(self._output_filepath,
+        if self._output_filepath:
+            self._append_file(self._output_filepath,
                               self._output_data)
 
-    def _file_append(filepath, data):
+    def _append_file(filepath, data):
         """Safely append data to the specified file."""
         try:
             with open(filepath, 'a') as fp:
@@ -21,18 +21,6 @@ class FileAction(Action):
             if e.errno != errno.EEXIST:
                 raise
 
-    # INITIALIZATION
-    def initialize(self):
-        """Empty initialize."""
-        pass
-
-    def initialize(self, directories):
-        """Create output directories."""
-        if not self.__directories:
-            for directory in directories:
-                if not os.path.isdir(directory):
-                    self._makedir(directory)
-
     def _makedir(self, directory):
         """Safely make the specified directory."""
         try:
@@ -40,3 +28,15 @@ class FileAction(Action):
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
+
+    # INITIALIZATION
+    def init(self, directories):
+        """Create output directories."""
+        for directory in directories:
+            if not os.path.isdir(directory):
+                self._makedir(directory)
+
+    def __init__(self, output_filepath=""):
+        """Initiliaze members."""
+        self._output_filepath = output_filepath
+        self._output_data = ""

@@ -4,6 +4,12 @@ from powl.actions.fileaction import FileAction
 
 class BodyComposition(FileAction):
 
+    # PROCESSING
+    def process(self):
+        """Process the data into the proper output format."""
+        mass, fat = self._parse_message(self._input_data)
+        self._output_data = "{0}, {1}".format(mass, fat)
+
     def _parse_message(self, data):
         """Parse body composition data into mass and body fat percentage."""
         mass = ''
@@ -17,9 +23,3 @@ class BodyComposition(FileAction):
         mass = mass.strip()
         fat = fat.strip()
         return mass, fat
-
-    # PROCESSING
-    def process(self):
-        """Process the data into the proper output format."""
-        mass, fat = self._parse_message(self._input_data)
-        self._output_data = "{0}, {1}".format(mass, fat)

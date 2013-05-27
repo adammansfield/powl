@@ -6,23 +6,14 @@ import shutil
 import textwrap
 import time
 from powl import logger
+from powl.actions.fileaction import FileAction
 
-class Transaction:
-
-    # TEMPLATES
-    def get_templates(self):
-        templates = []
-        for key, filename in self.filenames.iteritems():
-            account_name = self.accounts.get(key)
-            account_type = self.types.get(key)
-            header = self.qif_format_header(account_name, account_type)
-            template = (filename, header)
-            templates.append(template)
-        return templates
+class Transaction(FileAction):
 
     # TRANSACTION PROCESSING
-    def process(self, date, debit, credit, amount, memo):
+    def process(self):
         """Process a transaction into the QIF format and write to file."""
+        debit, credit, amount, memo = self._parse_message(self._input_data)
         if self.valid_transaction(date, debit, credit, amount):
             qif_date = self.qif_convert_date(date)
             qif_filename = self.qif_convert_filename(debit, credit)
@@ -38,11 +29,49 @@ class Transaction:
                                  qif_transfer,
                                  qif_amount,
                                  qif_memo)
-            return qif_filename, qif_transaction
+            self._output_filepath = qif_filename
+            self._output_data = qif_transaction
         else:
             # TODO: return an error for powl.py to handle
             self.log_transaction_error(date, debit, credit, amount, memo)
-            return None, None
+            self._output_filepath = ""
+            self._output_data = ""
+
+    def _parse_message(self, data):
+        """Parse a transaction data into debit, credit, amount and memo."""
+        debit = ''
+        credit = ''
+        amount = ''
+        memo = ''
+        params = re.split('-', data)
+        for param in params:
+            if re.match('^d', param):
+                debit = re.sub('^d', '', param)
+            elif re.match('^c', param):
+                credit = re.sub('^c', '', param)
+            elif re.match('^a', param):
+                amount = re.sub('^a', '', param)
+            elif re.match('^m', param):
+                memo = re.sub('^m', '', param)
+                memo = memo.replace("\"", '')
+        debit = debit.strip()
+        credit = credit.strip()
+        amount = amount.strip()
+        memo = memo.strip()
+        return debit, credit, amount, memo
+
+
+    # TEMPLATES
+    def get_templates(self):
+        templates = []
+        for key, filename in self.filenames.iteritems():
+            account_name = self.accounts.get(key)
+            account_type = self.types.get(key)
+            header = self.qif_format_header(account_name, account_type)
+            template = (filename, header)
+            templates.append(template)
+        return templates
+
 
     # VALIDITY
     def valid_accounts(self, debit, credit):
@@ -164,7 +193,7 @@ class Transaction:
         logger.error(logmsg)
 
     # INITIALIZATION
-    def __init__(self, filenames, types, assets, liabilities, revenues, expenses):
+    def init(self, filenames, types, assets, liabilities, revenues, expenses):
         """Set the paths used for transaction files."""
         self.filenames = filenames
         self.types = types
