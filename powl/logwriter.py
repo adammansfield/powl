@@ -48,13 +48,13 @@ class LogWriter(object):
 
     def error(self, message, *args, **kwargs):
         """
-        Log a error message.
+        Log an error message.
         """
         self._logger.error(message, *args, **kwargs)
 
     def info(self, message, *args, **kwargs):
         """
-        Log a info message.
+        Log an info message.
         """
         self._logger.info(message, *args, **kwargs)
 
