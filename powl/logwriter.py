@@ -11,12 +11,16 @@ class LogWriter(object):
     _MESSAGE_FORMAT = "%(asctime)s\t%(levelname)s\t%(message)s"
     _DATE_FORMAT = "%H:%M"
 
-    def __init__(self, folder, level=logging.INFO):
+    def __init__(
+        self,
+        folder,               # powl.filesystem.Folder
+        level=logging.INFO):  # logging.level
         """
         Initialize logger. Create and attach logging handlers. Create log file.
 
         Args:
-            folder (powl.filesystem.Folder): Folder where the log file will be stored.
+            folder: Folder where the log file will be stored.
+            level: Optional log level of the handlers.
         """
         self._logger = logging.getLogger()
 
