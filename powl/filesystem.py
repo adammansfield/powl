@@ -1,9 +1,10 @@
 """Provides methods for manipulating files and folders in a file system."""
 import os
 
-
 class File(object):
-    """Provides methods for reading and writing to and from a file."""
+    """
+    Provides methods for reading and writing to and from a file.
+    """
     
     _BACKUP_EXTENSION = ".backup"
     _TEMP_EXTENSION = ".temp"
@@ -14,6 +15,13 @@ class File(object):
     _MODE_WRITE = 'w'
 
     def __init__(self, path, filename):
+        """
+        Access a file in the given path. Creates a file if it does not exist.
+
+        Args:
+            path (string): Path to an existing folder.
+            filename (string): Name of file to be accessed.
+        """
         temp_filename = filename + self._TEMP_EXTENSION
         backup_filename = filename + self._BACKUP_EXTENSION
 
@@ -27,24 +35,41 @@ class File(object):
                 pass
 
     def append(self, data):
-        """Append to file."""
+        """
+        Append the given data to the file.
+
+        Args:
+            data (string): Data to be appended to the file.
+        """
         with open(self._path, self._MODE_APPEND) as outfile:
             outfile.write(data)
 
     def read(self):
-        """Read all lines file."""
-        data = ""
+        """
+        Read all lines file.
+
+        Returns (list):
+            A list of all the lines read from the file.
+        """
+        data = []
         with open(self._path, self._MODE_READ) as infile:
             data = infile.readlines()
         return data
 
     @property
     def path(self):
-        """Get the path to the file."""
+        """
+        Get the path to the file.
+        """
         return self._path
 
     def write(self, data):
-        """Write to file."""
+        """
+        Write the given data to file. Overwrite.
+
+        Args:
+            data (string): Data to be written to the file.
+        """
         if os.path.isfile(self._path):
             os.rename(self._path, self._backup_path)
 
@@ -61,11 +86,22 @@ class File(object):
 
 
 class Folder(object):
-    """Provides methods for manipulating files."""
+    """
+    Provides methods for manipulating files.
+    """
 
-    def __init__(self, path, sub_folder_name):
-        """Create the folder within the path if it does not exist."""
-        self._path = os.join(path, sub_folder_name)
+    def __init__(self, path, sub_folder_name = None):
+        """
+        Create the folder within the path if it does not exist.
+
+        Args:
+            path (string): Path to an existing folder.
+            sub_folder_name (string): Optional sub-folder name.
+        """
+        if sub_folder_name is None:
+            self._path = path
+        else:
+            self._path = os.join(path, sub_folder_name)
         
         if not os.path.isdir(self._path):
           try:
@@ -75,15 +111,43 @@ class Folder(object):
                   raise
 
     def delete_file(self, filename):
-        """Delete a file within this folder."""
+        """
+        Delete a file within this folder.
+
+        Args:
+            filename (string): Name of a file.
+        """
         filepath = os.join(self._path, filename)
         os.remove(filepath)
 
-    def get_file(self, filename):
-        """Return a filestream object associated with a file within this folder."""
+    def file_exists(self, filename):
+        """
+        Return if a file exists within this folder.
+
+        Args:
+            filename (string): Name of a file.
+
+        Returns (bool):
+            Whether the given file exists.
+        """
         filepath = os.join(self._path, filename)
-        return FileStream(filepath)
+        return os.path.isfile(filepath)
+
+    def get_file(self, filename):
+        """
+        Return a file object associated with a file within this folder.
+
+        Args:
+            filename (string): Name of a file.
+
+        Returns (powl.filesystem.File):
+            A File object of the given filename.
+        """
+        return File(self._path, filename)
 
     @property
     def path(self):
+        """
+        Get the path to the folder.
+        """
         return self._path
