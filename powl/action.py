@@ -19,8 +19,13 @@ class Action(object):
 
 class AccountingAction(Action):
 
-    def __init__(self, log, filenames, types, assets, liabilities, revenues, expenses):
-        """Set the paths used for transaction files."""
+    def __init__(self, log, parser, filenames, types, assets, liabilities, revenues, expenses):
+        """
+        Args:
+            log (powl.parser.BodyCompositionDataParser): Used to parse input string.
+            log (powl.parser.BodyCompositionDataParser): Used to parse input string.
+            file_object (powl.filesystem.File): Output file.
+        """
         self.filenames = filenames
         self.types = types
         self.assets = assets
@@ -32,9 +37,16 @@ class AccountingAction(Action):
                              self.revenues.items() +
                              self.expenses.items())
                              
-    def do(self):
-        """Process a transaction into the QIF format and write to file."""
+    def do(self, string, date):
+        """
+        Output accounting transaction to a QIF file.
+        
+        Args:
+            string (string): Formatted string containing debit, credit, amount, and memo.
+            date (datetime.date): Date of the transaction.
+        """
         debit, credit, amount, memo = self._parse_message(self._input_data)
+
         if self.valid_transaction(date, debit, credit, amount):
             qif_date = self.qif_convert_date(date)
             qif_filename = self.qif_convert_filename(debit, credit)
@@ -232,26 +244,50 @@ class BodyCompositionAction(Action):
 
     def do(self, string, date):
         """
-        Process the data into the proper output format.
+        Output body composition to file.
         
         Args:
             string (string): Formatted string containing mass and fat percentage.
+            date (datetime.date): Date associated with the action.
         """
         data = self._parser.parse(string)
-        output_date = time.strftime(self._OUTPUT_DATE_FORMAT, date)
-        output = "{0}, {1}, {2}".format(data.mass, data.fat_percentage)
+
+        output = "{0}, {1}, {2}".format(
+            time.strftime(self._OUTPUT_DATE_FORMAT, date),
+            data.mass,
+            data.fat_percentage)
+
         self._file.append_line(output)
+        self._log.info(
+            "Performed body composition action. Outputted '%s' to '%s'",
+            string,
+            self._file.filename)
 
 
 class NoteAction(Action):
+    """
+    Performs a body composition action.
+    """
 
-    def __init__(self, file_object):
+    def __init__(self, log, file_object):
         """
         Args:
+            log (powl.logwriter.LogWriter): Used to log.
             file_object (powl.filesystem.File): Output file.
         """
+        self._log = log
         self._file = file_object
 
     def do(self, string, date):
-        """Process the data into the proper output format."""
+        """
+        Output the note to file.
+
+        Args:
+            string (string): Note to output to file.
+            date (datetime.date): Date associated with the action.
+        """
         self._file.append_line(string)
+        self._log.info(
+            "Performed note action. Outputted '%s' to '%s'",
+            string,
+            self._file.filename)
