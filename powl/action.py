@@ -1,17 +1,38 @@
-#!/usr/bin/env python
-"""Process transaction data into the QIF format."""
-import logging
-import os
-import shutil
-import textwrap
+"""Provides classes to perform specific actions."""
 import time
-from powl import logger
-from powl.actions.fileaction import FileAction
 
-class Transaction(FileAction):
+class Action(object):
+    """
+    Provides methods to do an action with given data.
+    """
+    
+    def do(self, string, date):
+    """
+    Perform an action on the given string.
+    
+    Args:
+        string (str): A string collection of attributes for the specific action.
+        date (datetime.date): Date associated with the action.
+    """
+        pass
 
-    # TRANSACTION PROCESSING
-    def process(self):
+
+class AccountingAction(Action):
+
+    def __init__(self, log, filenames, types, assets, liabilities, revenues, expenses):
+        """Set the paths used for transaction files."""
+        self.filenames = filenames
+        self.types = types
+        self.assets = assets
+        self.liabilities = liabilities
+        self.revenues = revenues
+        self.expenses = expenses
+        self.accounts = dict(self.assets.items() +
+                             self.liabilities.items() +
+                             self.revenues.items() +
+                             self.expenses.items())
+                             
+    def do(self):
         """Process a transaction into the QIF format and write to file."""
         debit, credit, amount, memo = self._parse_message(self._input_data)
         if self.valid_transaction(date, debit, credit, amount):
@@ -61,7 +82,6 @@ class Transaction(FileAction):
         return debit, credit, amount, memo
 
 
-    # TEMPLATES
     def get_templates(self):
         templates = []
         for key, filename in self.filenames.iteritems():
@@ -192,16 +212,46 @@ class Transaction(FileAction):
                   "{0}memo: {1}{2}".format(logindent, memo, os.linesep))
         logger.error(logmsg)
 
-    # INITIALIZATION
-    def init(self, filenames, types, assets, liabilities, revenues, expenses):
-        """Set the paths used for transaction files."""
-        self.filenames = filenames
-        self.types = types
-        self.assets = assets
-        self.liabilities = liabilities
-        self.revenues = revenues
-        self.expenses = expenses
-        self.accounts = dict(self.assets.items() +
-                             self.liabilities.items() +
-                             self.revenues.items() +
-                             self.expenses.items())
+                             
+                             
+class BodyCompositionAction(Action):
+    """
+    Performs a body composition action.
+    """
+    
+    _OUTPUT_DATE_FORMAT = "%Y-%m-%d"
+
+    def __init__(self, parser, file_object):
+        """
+        Args:
+            parser (powl.parser.BodyCompositionDataParser): Used to parse input string.
+            file_object (powl.filesystem.File): Output file.
+        """
+        self._parser = parser
+        self._file = file_object
+
+    def do(self, string, date):
+        """
+        Process the data into the proper output format.
+        
+        Args:
+            string (string): Formatted string containing mass and fat percentage.
+        """
+        data = self._parser.parse(string)
+        output_date = time.strftime(self._OUTPUT_DATE_FORMAT, date)
+        output = "{0}, {1}, {2}".format(data.mass, data.fat_percentage)
+        self._file.append_line(output)
+
+
+class NoteAction(Action):
+
+    def __init__(self, file_object):
+        """
+        Args:
+            file_object (powl.filesystem.File): Output file.
+        """
+        self._file = file_object
+
+    def do(self, string, date):
+        """Process the data into the proper output format."""
+        self._file.append_line(string)
