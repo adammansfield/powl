@@ -25,6 +25,7 @@ class File(object):
         temp_filename = filename + self._TEMP_EXTENSION
         backup_filename = filename + self._BACKUP_EXTENSION
 
+        self._filename = filename
         self._path = os.path.join(path, filename)
         self._temp_path = os.path.join(path, temp_filename)
         self._backup_path = os.path.join(path, backup_filename)
@@ -62,6 +63,13 @@ class File(object):
             Whether this file is empty or not.
         """
         return os.path.getsize(self._path)
+
+    @property
+    def filename(self):
+        """
+        Get the name of the file.
+        """
+        return self._filename
 
     def read(self):
         """
