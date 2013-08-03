@@ -1,7 +1,7 @@
 """Perform actions with given data."""
-from powl.actions import action_types
+from powl import actiontype
 
-class ActionPerformer:
+class ActionManager:
     """
     Provides methods for doing actions.
     """
@@ -27,10 +27,9 @@ class ActionPerformer:
         self._note_action = note_action
 
         self._action_type_to_action_map = {
-            action_types.ActionTypes.ACCOUNTING: self._accounting_action,
-            action_types.ActionTypes.BODYCOMPOSITION: self._bodycomposition_action,
-            action_types.ActionTypes.INDETERMINATE: self._note_action,
-            action_types.ActionTypes.NOTE: self._note_action
+            actiontype.ACCOUNTING: self._accounting_action,
+            actiontype.BODYCOMPOSITION: self._bodycomposition_action,
+            actiontype.NOTE: self._note_action
         }
 
     def do_action(self, action_type, action_data):
@@ -42,14 +41,22 @@ class ActionPerformer:
             data: Action specific class containing all data required for the
                 specified action type.
         """
-        if action_type == action_types.ActionTypes.INDETERMINATE:
-            self._log.error("Action type is indeterminate", action_type)
-        else:
-            try:
-                action = self._action_type_to_action_map[action_type]
-                action.do(action_data)
-            except KeyError as e:
-                self._log.error(
-                    "Action type '%s' is not in the action type to action map",
-                    action_type
-                )
+        try:
+            action = self._action_type_to_action_map[action_type]
+        except KeyError as e:
+            self._log.error(
+                "Action type '%s' is not in the action map",
+                action_type)
+
+       try:
+            action.do(action_data)
+       except ValueError as e:
+            self._log.error(
+                "ValueError was raised by action '%s' with the message '%s'",
+                action_type,
+                e)
+       except IOError as e:
+            self._log.error(
+                "IOError was raised by action '%s' with the message '%s'",
+                action_type,
+                e)
