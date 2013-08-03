@@ -44,6 +44,25 @@ class File(object):
         with open(self._path, self._MODE_APPEND) as outfile:
             outfile.write(data)
 
+    def append_line(self, data):
+        """
+        Append the given data followed by a new line to the file.
+
+        Args:
+            data (string): Data to be appended to the file.
+        """
+        with open(self._path, self._MODE_APPEND) as outfile:
+            outfile.write(data + os.linesep)
+
+    def empty(self):
+        """
+        Return boolean if file is empty.
+
+        Returns (bool):
+            Whether this file is empty or not.
+        """
+        return os.path.getsize(self._path)
+
     def read(self):
         """
         Read all lines file.
