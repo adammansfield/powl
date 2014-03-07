@@ -11,8 +11,10 @@ class Action(object):
     Perform an action on the given string.
     
     Args:
-        string (str): A string collection of attributes for the specific action.
-        date (datetime.date): Date associated with the action.
+        string (str):
+            A string collection of attributes for the specific action.
+        date (datetime.date):
+            Date associated with the action.
     """
         pass
                              
@@ -27,8 +29,10 @@ class BodyCompositionAction(Action):
     def __init__(self, parser, file_object):
         """
         Args:
-            parser (powl.parser.BodyCompositionDataParser): Used to parse input string.
-            file_object (powl.filesystem.File): Output file.
+            parser (powl.parser.BodyCompositionDataParser):
+                Used to parse input string.
+            file_object (powl.filesystem.File):
+                Output file.
         """
         self._parser = parser
         self._file = file_object
@@ -38,8 +42,10 @@ class BodyCompositionAction(Action):
         Output body composition to file.
         
         Args:
-            string (string): Formatted string containing mass and fat percentage.
-            date (datetime.date): Date associated with the action.
+            string (string):
+                Formatted string containing mass and fat percentage.
+            date (datetime.date):
+                Date associated with the action.
         """
         data = self._parser.parse(string)
 
@@ -63,8 +69,10 @@ class NoteAction(Action):
     def __init__(self, log, file_object):
         """
         Args:
-            log (powl.logwriter.LogWriter): Used to log.
-            file_object (powl.filesystem.File): Output file.
+            log (powl.logwriter.LogWriter):
+                Used to log.
+            file_object (powl.filesystem.File):
+                Output file.
         """
         self._log = log
         self._file = file_object
@@ -91,27 +99,40 @@ class TransactionAction(Action):
         Data used to write a transaction for a QIF file.
         
         Attributes:
-            qif_file (powl.filesystem.File): Output file.
-            transfer_account (string): Transfer account.
-            date (string): Date in the MM/DD/YYYY format.
-            amount (string): Positive or negative dollar amount.
-            memo (string): Description of the transaction.
+            output_file: Output file.
+            transfer_account: Transfer account.
+            date: Date in the MM/DD/YYYY format.
+            amount: Positive or negative dollar amount.
+            memo: Description of the transaction.
         """
         
-        def __init__(self, qif_file = None, transfer_account = "", date = "", amount = "", memo = ""):
-            self.qif_file = qif_file
+        def __init__(self,
+                     output_file = None,    # powl.filesystem.File
+                     transfer_account = "", # string
+                     date = "",             # string
+                     amount = "",           # string
+                     memo = ""):            # string
+            self.output_file = output_file
             self.transfer_account = transfer_account
             self.date = date
             self.amount = amount
             self.memo = memo
 
 
-    def __init__(self, log, parser, files, account_types, assets, liabilities, revenues, expenses):
+    def __init__(self,
+                 log,           # powl.logwriter.LogWriter
+                 parser,        # powl.parser.AccountindDataParser
+                 files,         # list of powl.filesystem.File
+                 account_types, # list of string
+                 assets,        # list of string
+                 liabilities,   # list of string
+                 revenues,      # list of string
+                 expenses):     # list of string
         """
         Args:
-            log (powl.logwriter.LogWriter): Used to log.
-            parser (powl.parser.AccountingDataParser): Used to parse input string.
-            files (list of powl.filesystem.File): Output files.
+            log: Used to log.
+            parser: Used to parse input string.
+            files: Output files.
             account_type (dict): 
         """
         self._log = log
@@ -133,14 +154,15 @@ class TransactionAction(Action):
         Output accounting transaction to a QIF file.
         
         Args:
-            string (string): Formatted string containing debit, credit, amount, and memo.
-            date (datetime.date): Date of the transaction.
+            string: Formatted string containing debit, credit,
+                    amount, and memo.
+            date: Date of the transaction.
         """
         data = self._parser.parse(string)
-        transaction_data = self._convert_to_qif(data)
-        transaction_string = self._format_qif_transaction(transaction_data)
+        qif_data = self._convert_to_qif(data)
+        output = self._format_qif_transaction(transaction_data)
 
-        transaction_data.qif_file.append_line(transaction_string)
+        qif_data.output_file.append_line(output)
         self._log_transaction(transaction)
 
     def _convert_to_qif(self, data):
@@ -149,16 +171,20 @@ class TransactionAction(Action):
         """
         transaction = _QifTransactionData()
 
-        transaction.amount = self.convert_amount_to_qif(data.debit, data.amount)
+        transaction.amount = self.convert_amount_to_qif(
+            data.debit,
+            data.amount)
         transaction.date = self.convert_date_to_qif(data.date)
         transaction.memo = data.memo
         transaction.qif_file = self.get_qif_file(debit, credit)
-        transaction.transfer_account = self.get_qif_transfer_account(debit, credit)
+        transaction.transfer_account = self.get_qif_transfer_account(
+            debit,
+            credit)
 
         return transaction
 
 
-    def get_templates(self):
+    def _get_templates(self):
         templates = []
         for key, filename in self.filenames.iteritems():
             account_name = self.accounts.get(key)
@@ -170,7 +196,7 @@ class TransactionAction(Action):
 
 
     # QIF FORMATTING
-    def format_qif_transaction(self, date, transfer, amount, memo):
+    def _format_qif_transaction(self, date, transfer, amount, memo):
         """Formats qif data into a transaction for a QIF file."""
         data = { 'date': date,
                  'amount': amount,
@@ -184,7 +210,7 @@ class TransactionAction(Action):
             ^""".format(**data))
         return transaction
 
-    def format_qif_header(self, account_name, account_type):
+    def _format_qif_header(self, account_name, account_type):
         """Format an account name and type into a header for a QIF file."""
         data = { 'name': account_name, 'type': account_type }
         header = textwrap.dedent("""\
@@ -194,14 +220,81 @@ class TransactionAction(Action):
             ^
             !Type:{type}""".format(**data))
         return header
+    
+    # VALIDITY
+    def _validate_account(self, account):
+        """
+        Raise an exception if account is invalid.
+
+        Args:
+            account: Account to check.
+
+        Raises:
+            ValueError: If account does not exist.
+        """
+        if account not in self.accounts:
+            raise ValueError("account ({0}) does not exist".format(account))
+
+    def _validate_amount(self, amount):
+        """
+        Raise an exception if amount is invalid.
+
+        Args:
+            amount: Amount to check.
+
+        Raises:
+            ValueError: If amount is invalid.
+        """
+        try:
+            float(amount)
+        except ValueError:
+            raise ValueError(
+                "amount ({0}) cannot be converted to float".format(amount))
+
+    def _validate_date(self, date):
+        """
+        Raise an exception if date is invalid.
+
+        Args:
+            date: Date to check.
+
+        Raises:
+            ValueError: if amount is invalid.
+        """
+        try:
+            time.mktime(date)
+        except ValueError:
+            raise ValueError("date ({0}) is invalid".format(date))
+
+    def _validate_file_exists(self, debit, credit):
+        """
+        Raise an exception if both debit and credit do not have a 
+        corresponding file.
+        
+        Args:
+            debit: Debit account.
+            credit: Credit account.
+
+        Raises:
+            KeyError: if neither debit or credit has a corresponding file.
+        """
+        if debit not in self.filenames and
+           credit not in self.filenames:
+           raise KeyError(
+               "debit ({0}) and credit ({1})".format(debit, credit) +
+               "do not have a corresponding file")
 
     # QIF CONVERSION
     def convert_amount_to_qif(self, debit, amount):
-        """Convert amount based on debit."""
-        try:
-            float(amount)
-        except ValueError as error:
-            raise 
+        """
+        Convert amount based on debit.
+
+        Raises:
+            ValueError: If amount cannot be converted to a float.
+            KeyError: If debit is not an account.
+        """
+        self._validate_account(debit)
+        self._validate_amount(amount)
 
         if debit in self.expenses:
             return '-' + amount
@@ -210,30 +303,24 @@ class TransactionAction(Action):
 
     def convert_date_to_qif(self, date):
         """Convert struct_time to qif date format."""
-        try:
-            time.mktime(date)
-        except (TypeError, OverflowError, ValueError) as error:
-            raise
-
+        self._validate_date(date)
         return time.strftime('%m/%d/%Y', date)
 
     def get_qif_file(self, debit, credit):
         """Convert filename based on debit and credit."""
+        self._validate_debit_or_cred(debit, credit)
         if debit in self.filenames:
             return self.files.get(debit)
-        elif credit in self.filenames:
-            return self.files.get(credit)
         else:
-            raise ValueError("Debit or credit not in filenames.")
+            return self.files.get(credit)
 
     def get_transfer_account(self, debit, credit):
         """Convert transfer account based on debit and credit."""
+        self.validate_file(debit, credit)
         if debit in self.filenames:
             return self.accounts[credit]
-        else credit in self.filenames:
-            return self.accounts[debit]
         else:
-            raise ValueError("Debit or credit not in filenames.")
+            return self.accounts[debit]
 
     # LOGGING
     def log_transaction(self, date, path, transfer, amount, memo):
@@ -241,12 +328,13 @@ class TransactionAction(Action):
         filename = os.path.basename(path)
         logindent = '\t\t\t\t  '
         # TODO: use textwrap.dedent
-        logmsg = ("TRANSACTION{0}".format(os.linesep) +
-                  "{0}date: {1}{2}".format(logindent, date, os.linesep) +
-                  "{0}file: {1}{2}".format(logindent, filename, os.linesep) +
-                  "{0}transfer: {1}{2}".format(logindent, transfer, os.linesep) +
-                  "{0}amount: {1}{2}".format(logindent, amount, os.linesep) +
-                  "{0}memo: {1}{2}".format(logindent, memo, os.linesep))
+        logmsg = (
+            "TRANSACTION{0}".format(os.linesep) +
+            "{0}date: {1}{2}".format(logindent, date, os.linesep) +
+            "{0}file: {1}{2}".format(logindent, filename, os.linesep) +
+            "{0}transfer: {1}{2}".format(logindent, transfer, os.linesep) +
+            "{0}amount: {1}{2}".format(logindent, amount, os.linesep) +
+            "{0}memo: {1}{2}".format(logindent, memo, os.linesep))
         logger.info(logmsg)
 
     def log_transaction_error(self, date, debit, credit, amount, memo):
@@ -254,7 +342,8 @@ class TransactionAction(Action):
         date = time.strftime('%m/%d/%Y', date)
         logindent = '\t\t\t\t  '
         # TODO: use textwrap.dedent
-        logmsg = ("TRANSACTION{0}".format(os.linesep) +
+        logmsg = (
+            "TRANSACTION{0}".format(os.linesep) +
                   "{0}date: {1}{2}".format(logindent, date, os.linesep) +
                   "{0}debit: {1}{2}".format(logindent, debit, os.linesep) +
                   "{0}credit: {1}{2}".format(logindent, credit, os.linesep) +

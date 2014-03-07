@@ -3,6 +3,8 @@ import re
 from powl import actiontype
 from powl import actiondata
 
+# TODO: create a Parser class with a parse method. This will
+#       be inherited by all the parsers.
 
 class MessageParser:
     """
@@ -32,7 +34,7 @@ class MessageParser:
         return action_type, data
  
  
-class AccountingDataParser(object):
+class TransactionParser(object):
     """
     Parses a formatted string containing accounting data.
     """
@@ -65,25 +67,25 @@ class AccountingDataParser(object):
                 data.credit = credit.strip()
             elif re.match(self._ACCOUNTING_TOKEN_AMOUNT, param):
                 data.amount = re.sub(self._ACCOUNTING_TOKEN_AMOUNT, '', param)
-                adat.amount = amount.strip()
+                data.amount = amount.strip()
             elif re.match(self._ACCOUNTING_TOKEN_MEMO, param):
                 data.memo = re.sub(self._ACCOUNTING_TOKEN_MEMO, '', param)
                 data.memo = memo.replace("\"", '')
                 data.memo = memo.strip()
         
         if not data.debit:
-            raise ValueError("Debit was not parsed")
+            raise ValueError("debit was not parsed")
         if not data.credit:
-            raise ValueError("Credit was not parsed")
+            raise ValueError("credit was not parsed")
         if not data.amount:
-            raise ValueError("Amount was not parsed")
+            raise ValueError("amount was not parsed")
         if not data.memo:
-            raise ValueError("Memo was not parsed")
+            raise ValueError("memo was not parsed")
                 
         try:
             float(data.amount)
         except ValueError:
-            raise ValueError("Amount is not a number")
+            raise ValueError("amount is not a number")
         
         return data
 
