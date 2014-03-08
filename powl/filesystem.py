@@ -62,7 +62,7 @@ class File(object):
         Returns (bool):
             Whether this file is empty or not.
         """
-        return os.path.getsize(self._path)
+        return os.path.getsize(self._path) == 0
 
     @property
     def filename(self):
@@ -105,7 +105,6 @@ class File(object):
 
         if os.path.isfile(self._temp_path):
             os.rename(self._temp_path, self._path) 
-
             if os.path.isfile(self._backup_path):
                 os.remove(self._backup_path)
         elif os.path.isfile(self._backup_path):
