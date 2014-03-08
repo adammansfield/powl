@@ -108,10 +108,10 @@ class TransactionAction(Action):
         
         def __init__(self,
                      output_file = None,    # powl.filesystem.File
-                     transfer_account = "", # string
-                     date = "",             # string
-                     amount = "",           # string
-                     memo = ""):            # string
+                     transfer_account = "", # str
+                     date = "",             # str
+                     amount = "",           # str
+                     memo = ""):            # str
             self.output_file = output_file
             self.transfer_account = transfer_account
             self.date = date
@@ -121,19 +121,16 @@ class TransactionAction(Action):
 
     def __init__(self,
                  log,           # powl.logwriter.LogWriter
-                 parser,        # powl.parser.AccountindDataParser
-                 files,         # list of powl.filesystem.File
-                 account_types, # list of string
-                 assets,        # list of string
-                 liabilities,   # list of string
-                 revenues,      # list of string
-                 expenses):     # list of string
+                 parser,        # powl.parser.TransactionParser
+                 files,         # {str: powl.filesystem.File}
+                 account_types, # {str: str}
+                 assets,        # {str: str}
+                 liabilities,   # {str: str}
+                 revenues,      # {str: str}
+                 expenses):     # {str: str}
         """
         Args:
-            log: Used to log.
-            parser: Used to parse input string.
-            files: Output files.
-            account_type (dict): 
+            TODO: add args here
         """
         self._log = log
         self._parser = parser
@@ -148,8 +145,15 @@ class TransactionAction(Action):
                               self.liabilities.items() +
                               self.revenues.items() +
                               self.expenses.items())
+        # TODO: check to make sure that:
+        #         1. each key in filenames exists as a key in accounts
+        #         2. each key in account_types exists as a key in accounts
+        #       else throw a KeyValue Error and write a test for this
+
                              
-    def do(self, string, date):
+    def do(self,
+           string, # str
+           date):  # time.struct_time
         """
         Output accounting transaction to a QIF file.
         
@@ -235,22 +239,6 @@ class TransactionAction(Action):
         if account not in self.accounts:
             raise ValueError("account ({0}) does not exist".format(account))
 
-    def _validate_amount(self, amount):
-        """
-        Raise an exception if amount is invalid.
-
-        Args:
-            amount: Amount to check.
-
-        Raises:
-            ValueError: If amount is invalid.
-        """
-        try:
-            float(amount)
-        except ValueError:
-            raise ValueError(
-                "amount ({0}) cannot be converted to float".format(amount))
-
     def _validate_date(self, date):
         """
         Raise an exception if date is invalid.
@@ -285,21 +273,33 @@ class TransactionAction(Action):
                "do not have a corresponding file")
 
     # QIF CONVERSION
-    def convert_amount_to_qif(self, debit, amount):
+    def convert_amount(self, debit, amount):        
         """
-        Convert amount based on debit.
+        Convert amount to QIF format based on debit.
+
+        Args:
+            debit: Debit account of the transaction.
+            amount: Amount of the transaction.
+
+        Returns:
+            Formatted amount to use in QIF file.
 
         Raises:
             ValueError: If amount cannot be converted to a float.
             KeyError: If debit is not an account.
         """
-        self._validate_account(debit)
-        self._validate_amount(amount)
+        try:
+            formatted_amount = "{0:.2f}".format(float(amount))
+        except ValueError:
+            raise ValueError(
+                "amount ({0}) cannot be converted to float".format(amount))
 
         if debit in self.expenses:
-            return '-' + amount
+            return "-{0}".format(formatted_amount)
+        else if debit in self.accounts:
+            return formatted_amount
         else:
-            return amount
+            raise KeyError("account ({0}) does not exist".format(debit))
 
     def convert_date_to_qif(self, date):
         """Convert struct_time to qif date format."""
