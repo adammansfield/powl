@@ -104,12 +104,14 @@ class MessageParser(Parser):
         ValueError
             If a valid action was not parsed.
         """
-        action_type, data = message.split(self._DELIMITER, 1)
+        action_key, data = message.split(self._DELIMITER, 1)
 
-        if action_type not in actiontype.ACTIONABLE:
-            Raise ValueError("Action type was not parsed")
-
-        return action_type, data
+        try:
+            action_type = actiontype.ACTION_MAP[action_key]
+        except KeyError:
+            raise KeyError("action key ({0}) is invalid".format(action_key))
+        else:
+            return action_type, data
 
 
 class TransactionDataParser(Parser):
