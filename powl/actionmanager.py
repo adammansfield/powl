@@ -32,7 +32,7 @@ class ActionManager:
             actiontype.NOTE: self._note_action
         }
 
-    def do_action(self, action_type, action_data):
+    def do_action(self, action_type, action_data, action_date):
         """
         Do the specified action.
 
@@ -43,20 +43,17 @@ class ActionManager:
         """
         try:
             action = self._action_type_to_action_map[action_type]
-        except KeyError as e:
+        except KeyError:
             self._log.error(
                 "Action type '%s' is not in the action map",
                 action_type)
+        else:
+            try:
+                action.do(action_data, action_date)
+            except (IOError, OverflowError, TypeError, ValueError) as error:
+                self._log.error(
+                    "'%s' was raised by action '%s' with the message '%s'",
+                    type(error).__name__,
+                    action_type,
+                    error)
 
-       try:
-            action.do(action_data)
-       except ValueError as e:
-            self._log.error(
-                "ValueError was raised by action '%s' with the message '%s'",
-                action_type,
-                e)
-       except IOError as e:
-            self._log.error(
-                "IOError was raised by action '%s' with the message '%s'",
-                action_type,
-                e)
