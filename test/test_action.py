@@ -29,6 +29,7 @@ class TestActionTransaction(unittest.TestCase):
         "savings":    "Assets:Savings"
         "portfolio":  "Assets:Portfolio"
     }
+    _ASSETS_KEYS = _ASSETS.keys()
 
     _LIABILITIES = {
         "visa":       "Liabilities:Visa",
@@ -36,6 +37,7 @@ class TestActionTransaction(unittest.TestCase):
         "loan":       "Liabilities:Loan",
         "payable":    "Liabilities:Payable"
     }
+    _LIABILITIES = _LIABILITIES.keys()
 
     _REVENUES = {
         "earnings":   "Revenue:Earnings",
@@ -43,12 +45,14 @@ class TestActionTransaction(unittest.TestCase):
         "capgain":    "Revenue:Capital Gains",
         "dividends":  "Revenue:Dividends"
     }
+    _REVENUES_KEYS = _REVENUES.keys()
 
     _EXPENSES = {
         "food":       "Expenses:Food",
         "rent":       "Expenses:Rent",
         "utilities":  "Expenses:Utilities"
     }
+    _EXPENSES_KEYS = _EXPENSES.keys()
 
     # INITIALIZATION
     def setUp(self):
@@ -67,7 +71,7 @@ class TestActionTransaction(unittest.TestCase):
             self._EXPENSES
         )
     
-    # TEST ACTION
+    # ACTION
     def test_do_valid(self):
         # TODO: put proper values here.
         string = "" # input
@@ -86,7 +90,8 @@ class TestActionTransaction(unittest.TestCase):
 
         # TODO: assert mockfile._append_line_data == expected
             
-    # CONVERT AMOUNT
+    # QIF CONVERSION
+    ## CONVERT AMOUNT
     def test_convert_amount_invalid_account(self):
         """Test for an account that does not exist."""
         debit = "non-existant account"
@@ -99,14 +104,58 @@ class TestActionTransaction(unittest.TestCase):
 
     def test_convert_amount_invalid_amount(self):
         """Test for an amount that cannot be converted to float."""
-        debit = _expenses.keys()[0]
-        amount = 5.0
-        with self.assertRaises(KeyError) as context:
-            self.transaction._convert_amount(debit, amount)
+        debit = self._ASSETS_KEYS[0]
+        amount = "foo"
+        with self.assertRaises(ValueError) as context:
+            self._action._convert_amount(debit, amount)
         self.assertEqual(
             context.exception.message,
-            "account ({0}) does not exist".format(debit))
+            "amount ({0}) cannot be converted to float".format(amount))
+    
+    def test_convert_amount_debit_is_expense(self):
+        """Test for output amount when debit is an expense."""
+        debit = self._EXPENSES_KEYS[0] 
+        amount = "25.15"
+        expected = "-25.15"
+        actual = self._action._convert_amount(debit, amount)
+        self.assertEqual(actual, expected)
 
+    def test_convert_amount_debit_is_not_expense(self):
+        """Test for output amount when debit is not an expense."""
+        debit = self._ASSETS_KEYS[0] 
+        amount = "10.75"
+        expected = "10.75"
+        actual = self._action._convert_amount(debit, amount)
+        self.assertEqual(actual, expected)
+
+    def test_convert_amount_output_is_two_decimal_places(self):
+        """Test various inputs that output is two decimal places."""
+        debit = self._ASSETS_KEYS[0]
+
+        amount = "5"
+        expected = "5.00"
+        actual = self._action._convert_amount(debit, amount)
+        self.assertEqual(actual, expected)
+
+        amount = "10.2"
+        expected = "10.20"
+        actual = self._action._convert_amount(debit, amount)
+        self.assertEqual(actual, expected)
+
+        amount = "20.45"
+        expected = "20.45"
+        actual = self._action._convert_amount(debit, amount)
+        self.assertEqual(actual, expected)
+
+        amount = "100.455"
+        expected = "100.45"
+        actual = self._action._convert_amount(debit, amount)
+        self.assertEqual(actual, expected)
+        
+        amount = "100.456"
+        expected = "100.46"
+        actual = self._action._convert_amount(debit, amount)
+        self.assertEqual(actual, expected)
 
 
 
