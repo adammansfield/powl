@@ -19,3 +19,4 @@ class NullLogWriter(object):
 
     def warning(self, message, *args, **kwargs):
         pass
+
