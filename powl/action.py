@@ -239,21 +239,6 @@ class TransactionAction(Action):
         if account not in self.accounts:
             raise ValueError("account ({0}) does not exist".format(account))
 
-    def _validate_date(self, date):
-        """
-        Raise an exception if date is invalid.
-
-        Args:
-            date: Date to check.
-
-        Raises:
-            ValueError: if amount is invalid.
-        """
-        try:
-            time.mktime(date)
-        except ValueError:
-            raise ValueError("date ({0}) is invalid".format(date))
-
     def _validate_file_exists(self, debit, credit):
         """
         Raise an exception if both debit and credit do not have a 
@@ -273,7 +258,7 @@ class TransactionAction(Action):
                "do not have a corresponding file")
 
     # QIF CONVERSION
-    def convert_amount(self, debit, amount):        
+    def _convert_amount(self, debit, amount):        
         """
         Convert amount to QIF format based on debit.
 
@@ -301,10 +286,36 @@ class TransactionAction(Action):
         else:
             raise KeyError("account ({0}) does not exist".format(debit))
 
-    def convert_date_to_qif(self, date):
-        """Convert struct_time to qif date format."""
-        self._validate_date(date)
-        return time.strftime('%m/%d/%Y', date)
+    def _convert_date(self, date):
+        """
+        Convert struct_time to QIF date format (MM/DD/YYYY).
+
+        Args:
+            date: The date of the transaction.
+
+        Returns:
+            String date in the format of "MM/DD/YYYY".
+
+        Raises:
+            TypeError: If date is not a struct_time.
+            ValueError: If a date value is out of range.
+            OverflowError: If a value in the tuple is too large to be stored
+                           in a C long.
+        """
+        try:
+            return time.strftime("%m/%d/%Y", date)
+        except TypeError as e:
+            raise TypeError(
+                "date ({0}) cannot be converted to MM/DD/YYYY ".format(date) +
+                "because {1}".format(e.message))
+        except ValueError as e:
+            raise ValueError(
+                "date ({0}) cannot be converted to MM/DD/YYYY ".format(date) +
+                "because {1}".format(e.message))
+        except OverflowError as e:
+            raise OverflowError(
+                "date ({0}) cannot be converted to MM/DD/YYYY ".format(date) +
+                "because {1}".format(e.message))
 
     def get_qif_file(self, debit, credit):
         """Convert filename based on debit and credit."""
