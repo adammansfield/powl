@@ -1,6 +1,28 @@
 """Provides conversion for transaction data into an exchange format."""
 
 class TransactionConverter(object):
+    """
+    Provides methods to convert data into a financial exchange format.
+    """
+
+    def convert(self, date, debit, credit, amount, memo):
+        """
+        Convert a transaction into an exchange financial format.
+
+        Parameters
+        ----------
+        date : time.struct_time
+            Date of the transaction.
+        debit : str
+            Debit account of the transaction.
+        credit : str
+            Credit account of the transaction.
+        amount : float
+            Amount of the transaction.
+        memo : str
+            Description of the transaction.
+        """
+        pass
 
 
 class QifConverter(TransactionConverter):
@@ -8,7 +30,7 @@ class QifConverter(TransactionConverter):
     Provides methods to convert a transaction into QIF format.
     """
 
-    class _QifTransactionData(object):
+    class _QifData(object):
         """
         Data used to write a transaction for a QIF file.
 
@@ -27,21 +49,11 @@ class QifConverter(TransactionConverter):
         """
 
         def __init__(self,
-                     output_file = None,    # powl.filesystem.File
-                     transfer_account = "", # str
-                     date = "",             # str
-                     amount = "",           # str
-                     memo = ""):            # str
-            """
-            Parameters
-            ----------
-            output_file : powl.filesystem.File, optional
-            transfer_account : str, optional
-            date : str, optional
-            amount : str, optional
-            memo : str, optional
-
-            """
+                     output_file = None,
+                     transfer_account = "",
+                     date = "",
+                     amount = "",
+                     memo = ""):
             self.output_file = output_file
             self.transfer_account = transfer_account
             self.date = date
@@ -49,15 +61,13 @@ class QifConverter(TransactionConverter):
             self.memo = memo
 
 
-    def __init__(self, log, parser, files, account_types, assets, liabilities,
+    def __init__(self, log, files, account_types, assets, liabilities,
                  revenues, expenses):
         """
         Parameters
         ----------
         log : powl.logwriter.Log
             Used to log.
-        parser : powl.parser.TransactionParser
-            Used to parse input.
         files : dict of powl.filesystem.File
             Map of account key to files.
         account_types : dict
@@ -75,7 +85,8 @@ class QifConverter(TransactionConverter):
         ------
         ValueError
             If an account key that exists in filenames or account_types
-            does not exist in any of assets, liabilities, revenues, expenses.
+            does not exist in any of assets, liabilities, revenues, or
+            expenses.
 
         Notes
         -----
@@ -85,7 +96,6 @@ class QifConverter(TransactionConverter):
             "entertainment" can also map to "Expenses:Entertainment".
         """
         self._log = log
-        self._parser = parser
         self._files = files
         self._account_types = account_types
         self._assets = assets
@@ -103,16 +113,34 @@ class QifConverter(TransactionConverter):
         #       else throw a KeyValue Error and write a test for this
 
 
-    def do(self,
-           string, # str
-           date):  # time.struct_time
+    def convert(self, date, debit, credit, amount, memo):
         """
-        Output accounting transaction to a QIF file.
+        Convert transaction data into QIF format.
 
-        Args:
-            string: Formatted string containing debit, credit,
-                    amount, and memo.
-            date: Date of the transaction.
+        Parameters
+        ----------
+        date : time.struct_time
+            Date of the transaction.
+        debit : str
+            Debit account of the transaction.
+        credit : str
+            Credit account of the transaction.
+        amount : float
+            Amount of the transaction.
+        memo : str
+            Description of the transaction.
+
+        Returns
+        -------
+        record : str
+            QIF record of the transaction.
+        qif_file : powl.filesystem.File
+            The QIF file to output to.
+
+        Notes
+        -----
+        Since it depends which QIF file records the transaction, the return
+        value also contains the file to write to.
         """
         data = self._parser.parse(string)
         qif_data = self._convert_to_qif(data)
@@ -125,7 +153,7 @@ class QifConverter(TransactionConverter):
         """
         Parse a transaction data into debit, credit, amount and memo.
         """
-        transaction = _QifTransactionData()
+        transaction = _QifData()
 
         transaction.amount = self.convert_amount_to_qif(
             data.debit,
@@ -233,7 +261,8 @@ class QifConverter(TransactionConverter):
                 "amount ({0}) cannot be converted to float".format(amount))
 
         if debit in self.expenses:
-            return "-{0}".format(formatted_amount)
+            # Amount should be negative.
+            return "-" + formatted_amount
         else if debit in self.accounts:
             return formatted_amount
         else:
@@ -303,16 +332,3 @@ class QifConverter(TransactionConverter):
             "{0}memo: {1}{2}".format(logindent, memo, os.linesep))
         logger.info(logmsg)
 
-    def log_transaction_error(self, date, debit, credit, amount, memo):
-        """Logs the transaction."""
-        date = time.strftime('%m/%d/%Y', date)
-        logindent = '\t\t\t\t  '
-        # TODO: use textwrap.dedent
-        logmsg = (
-            "TRANSACTION{0}".format(os.linesep) +
-                  "{0}date: {1}{2}".format(logindent, date, os.linesep) +
-                  "{0}debit: {1}{2}".format(logindent, debit, os.linesep) +
-                  "{0}credit: {1}{2}".format(logindent, credit, os.linesep) +
-                  "{0}amount: {1}{2}".format(logindent, amount, os.linesep) +
-                  "{0}memo: {1}{2}".format(logindent, memo, os.linesep))
-        logger.error(logmsg)
