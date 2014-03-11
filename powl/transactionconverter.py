@@ -120,14 +120,22 @@ class QifConverter(TransactionConverter):
         qif_date = self._convert_date(date)
         qif_transfer = self._get_transfer_account(debit, credit)
         qif_amount = self._convert_amount(debit, credit)
-        record = self._format_qif_transaction(qif_date,
-                                              qif_transfer,
-                                              qif_amount,
-                                              memo)
+        qif_memo = memo
+        qif_record = self._format_qif_transaction(qif_date,
+                                                  qif_transfer,
+                                                  qif_amount,
+                                                  qif_memo)
         qif_file = self._get_qif_file(debit, credit)
 
-        return record, qif_file
+        self._log_transaction(
+            qif_date,
+            qif_file.filename,
+            qif_transfer,
+            qif_amount,
+            qif_memo)
+        return qif_record, qif_file
 
+    # QIF FILE FORMATTING
     def _get_templates(self):
         templates = []
         for key, filename in self.filenames.iteritems():
@@ -163,22 +171,7 @@ class QifConverter(TransactionConverter):
             !Type:{type}""".format(**data))
         return header
 
-    # VALIDITY
-    def _validate_account(self, account):
-        """
-        Raise an exception if account is invalid.
-
-        Args:
-            account: Account to check.
-
-        Raises:
-            ValueError: If account does not exist.
-        """
-        if account not in self.accounts:
-            raise ValueError("account ({0}) does not exist".format(account))
-
-
-    # QIF CONVERSION
+    # QIF RECORD CONVERSION
     def _convert_amount(self, debit, amount):
         """
         Convert amount to QIF format based on debit.
@@ -296,17 +289,27 @@ class QifConverter(TransactionConverter):
             return self.accounts[debit]
 
     # LOGGING
-    def log_transaction(self, date, path, transfer, amount, memo):
-        """Logs the transaction."""
-        filename = os.path.basename(path)
-        logindent = '\t\t\t\t  '
-        # TODO: use textwrap.dedent
-        logmsg = (
-            "TRANSACTION{0}".format(os.linesep) +
-            "{0}date: {1}{2}".format(logindent, date, os.linesep) +
-            "{0}file: {1}{2}".format(logindent, filename, os.linesep) +
-            "{0}transfer: {1}{2}".format(logindent, transfer, os.linesep) +
-            "{0}amount: {1}{2}".format(logindent, amount, os.linesep) +
-            "{0}memo: {1}{2}".format(logindent, memo, os.linesep))
-        logger.info(logmsg)
+    def _log_transaction(self, date, filename, transfer, amount, memo):
+        """
+        Debug logs the transaction.
+
+        Parameters
+        ----------
+        date : str
+            Date of the transaction
+        filename : str
+            Name of the QIF file.
+        transfer : str
+            Transfer QIF account.
+        amount : str
+            Formatted amount.
+        memo : str
+            Description of the transaction.
+        """
+        self._log.debug("QIF transaction:")
+        self._log.debug("   date:     %s", date)
+        self._log.debug("   file:     %s", filename)
+        self._log.debug("   transfer: %s", transfer)
+        self._log.debug("   amount:   %s", amount)
+        self._log.debug("   memo:     %s", memo)
 
