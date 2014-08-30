@@ -8,7 +8,7 @@ class MockFile(object):
         return self._read_retval
 
     @read_retval.setter
-    def read_retval(self, value)
+    def read_retval(self, value):
         self._read_retval = value
 
     @property
@@ -16,7 +16,7 @@ class MockFile(object):
         return self._append_data
 
     @append_data.setter
-    def append_data(self, value)
+    def append_data(self, value):
         self._append_data = value
 
     @property
@@ -24,7 +24,7 @@ class MockFile(object):
         return self._append_line_data
 
     @append_line_data.setter
-    def append_line_data(self, value)
+    def append_line_data(self, value):
         self._append_line_data = value
 
     # powl.filesystem.File methods
@@ -41,7 +41,7 @@ class MockFile(object):
 
     def append_line(self, data):
         self._append_line_data = value
-    
+
     def empty(self):
         return False
 

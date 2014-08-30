@@ -2,10 +2,10 @@
 """Tests for TransactionAction in powl.action."""
 import time
 import unittest
-from tests.mocks.filesystem import MockFile
-from tests.mocks.parser import MockParser
-from powl.transactionconverter import TransactionConverter
-from powl.parser import TransactionParser
+from powl.transactionconverter import QifConverter
+from test.mock.filesystem import MockFile
+from test.mock.logwriter import MockLogWriter
+from test.mock.parser import MockParser
 
 class TestTransactionConverter(unittest.TestCase):
     """
@@ -31,7 +31,7 @@ class TestTransactionConverter(unittest.TestCase):
     _ASSETS = {
         "cash":       "Assets:Cash",
         "chequing":   "Assets:Chequing",
-        "savings":    "Assets:Savings"
+        "savings":    "Assets:Savings",
         "portfolio":  "Assets:Portfolio"
     }
     _ASSETS_KEYS = _ASSETS.keys()
@@ -60,7 +60,7 @@ class TestTransactionConverter(unittest.TestCase):
     _EXPENSES_KEYS = _EXPENSES.keys()
 
     def setUp(self):
-        self._log = NullLogWriter()
+        self._log = MockLogWriter()
 
         self._converter = QifConverter(
             self._log,
@@ -71,17 +71,9 @@ class TestTransactionConverter(unittest.TestCase):
             self._REVENUES,
             self._EXPENSES)
 
-    # Initialization tests.
-    def test_invalid_key_to_file(self):
-        # TODO: check to make sure that:
-        #         1. each key in filenames exists as a key in accounts
-        #         2. each key in account_types exists as a key in accounts
-        #       else throw a KeyValue Error and write a test for this
-        pass
-
     # Convert whole transaction tests.
-    def test_convert(self):
-        # TODO: put proper values here.
+    @unittest.skip("TODO: impl")
+    def test__convert(self):
         date = None
         debit = ""
         credit = ""
@@ -99,12 +91,12 @@ class TestTransactionConverter(unittest.TestCase):
         self.assertEqual(actual_file, None)
 
     # Format QIF record tests.
-    def test_format_qif_record_expected_output(self):
+    def test__format_qif_record__expected_output(self):
     # TODO: test expected output.
         pass
 
     # Convert amount tests.
-    def test_convert_amount_invalid_debit_account(self):
+    def test__convert_amount__invalid_debit_account(self):
         """
         Test for a debit account that is invalid and does not exist.
         """
@@ -116,7 +108,7 @@ class TestTransactionConverter(unittest.TestCase):
             context.exception.message,
             "account key ({0}) does not exist".format(debit))
 
-    def test_convert_amount_invalid_amount(self):
+    def test__convert_amount__invalid_amount(self):
         """
         Test for an amount that cannot be converted to float.
         """
@@ -128,7 +120,7 @@ class TestTransactionConverter(unittest.TestCase):
             context.exception.message,
             "amount ({0}) cannot be converted to float".format(amount))
 
-    def test_convert_amount_debit_is_expense(self):
+    def test__convert_amount__debit_is_expense(self):
         """
         Test for output amount when debit is an expense.
         """
@@ -138,7 +130,7 @@ class TestTransactionConverter(unittest.TestCase):
         actual = self._converter._convert_amount(debit, amount)
         self.assertEqual(actual, expected)
 
-    def test_convert_amount_debit_is_not_expense(self):
+    def test__convert_amount__debit_is_not_expense(self):
         """
         Test for output amount when debit is not an expense.
         """
@@ -148,7 +140,7 @@ class TestTransactionConverter(unittest.TestCase):
         actual = self._converter._convert_amount(debit, amount)
         self.assertEqual(actual, expected)
 
-    def test_convert_amount_output_is_two_decimal_places(self):
+    def test__convert_amount__output_is_two_decimal_places(self):
         """
         Test various inputs that output is two decimal places.
         """
@@ -180,7 +172,7 @@ class TestTransactionConverter(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     # Convert date tests.
-    def test_convert_date_type_error(self):
+    def test__convert_date__type_error(self):
         """
         Test for a date that is invalid.
         """
@@ -192,7 +184,7 @@ class TestTransactionConverter(unittest.TestCase):
             "date ({0}) cannot be converted to MM/DD/YYYY ".format(date) +
             "because argument must be 9-item sequence, not str")
 
-    def test_convert_date_overflow_error(self):
+    def test__convert_date__overflow_error(self):
         """
         Test for a date that cannot be converted to C long.
         """
@@ -204,7 +196,7 @@ class TestTransactionConverter(unittest.TestCase):
             "date ({0}) cannot be converted to MM/DD/YYYY ".format(date) +
             "because Python int too large to convert to C long")
 
-    def test_convert_date_value_error(self):
+    def test__convert_date__value_error(self):
         """
         Test for a date that is out of range.
         """
@@ -216,16 +208,16 @@ class TestTransactionConverter(unittest.TestCase):
             "date ({0}) cannot be converted to MM/DD/YYYY ".format(date) +
             "because year out of range")
 
-    def test_convert_date_current_date(self):
+    def test__convert_date__current_date(self):
         """
         Test the expected output using the current date.
         """
-        date = localtime()
+        date = time.localtime()
         expected = time.strftime("%m/%d/%Y", date)
         actual = self._converter._convert_date(date)
         self.assertEqual(actual, expected)
 
-    def test_convert_date_past_date(self):
+    def test__convert_date__past_date(self):
         """
         Test the expected output using a past date.
         """
@@ -241,9 +233,13 @@ class TestTransactionConverter(unittest.TestCase):
     #           - debit with matching file and credit without matching file
     #           - debit without matching file and credit with matching file
     #           - debit without matching file and credit without matching file
+    #
+    # TODO: add test using get_file and get_transfer together to make sure
+    #       that both returns work together eg. file from debit then transfer
+    #       must be from credit and vice versa.
 
     # Get QIF file tests
-    def test_get_qif_file_both_have_no_file(self):
+    def test__get_qif_file__both_have_no_file(self):
         """
         Test for a invalid debit key (that has no associated file) and an
         invalid credit key (that has no associated file).
@@ -258,7 +254,7 @@ class TestTransactionConverter(unittest.TestCase):
             "has an associated QIF file")
         self.assertEqual(context.exception.message, expected_message)
 
-    def test_get_qif_file_both_have_file(self):
+    def test__get_qif_file__both_have_file(self):
         """
         Test for a valid debit key (that has an associated file) and a valid
         credit key (that has an associated file). Expect back the file
@@ -270,7 +266,7 @@ class TestTransactionConverter(unittest.TestCase):
         actual = self._converter._get_qif_file(debit, credit)
         self.assertEqual(actual, expected)
 
-    def test_get_qif_file_debit_has_file_and_credit_has_no_file(self):
+    def test__get_qif_file__debit_has_file_and_credit_has_no_file(self):
         """
         Test for a valid debit key (that has an associated file) and an
         invalid credit key (that has no associated file).
@@ -281,7 +277,7 @@ class TestTransactionConverter(unittest.TestCase):
         actual = self._converter._get_qif_file(debit, credit)
         self.assertEqual(actual, expected)
 
-    def test_get_qif_file_debit_has_no_file_and_credit_has_file(self):
+    def test__get_qif_file__debit_has_no_file_and_credit_has_file(self):
         """
         Test for a invalid debit key (that has no associated file) and a
         valid credit (that has an associated file).
@@ -292,6 +288,12 @@ class TestTransactionConverter(unittest.TestCase):
         actual = self._converter._get_qif_file(debit, credit)
         self.assertEqual(actual, expected)
 
+    ## Get QIF transfer account tests
+    #def test__get_transfer__both_file_both_account(self):
+    #    """
+    #    Test for debit and credit keys that both have have associated QIF
+    #    files and associated QIF accounts.
+    #    """
 
-    ## GET TRANSFER ACCOUNT
-
+if __name__ == '__main__':
+    unittest.main(verbosity=2)

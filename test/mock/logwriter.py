@@ -1,9 +1,6 @@
 """Provides a mock null object for logging."""
 
-class NullLogWriter(object):
-
-    def __init__(self, folder, level=logging.INFO):
-        pass
+class MockLogWriter(object):
 
     def critical(self, message, *args, **kwargs):
         pass

@@ -1,4 +1,5 @@
 """Provides conversion for transaction data into an exchange format."""
+import time
 
 class TransactionConverter(object):
     """
@@ -50,13 +51,6 @@ class QifConverter(TransactionConverter):
         expenses : dict
             Map of account key to Expensess.
 
-        Raises
-        ------
-        ValueError
-            If an account key that exists in filenames or account_types
-            does not exist in any of assets, liabilities, revenues, or
-            expenses.
-
         Notes
         -----
         An account key is a string that maps to a QIF account.
@@ -72,21 +66,10 @@ class QifConverter(TransactionConverter):
         self._revenues = revenues
         self._expenses = expenses
 
-        self._accounts = dict(self.assets.items() +
-                              self.liabilities.items() +
-                              self.revenues.items() +
-                              self.expenses.items())
-
-        for key in self._files:
-            if key not in self._account_types:
-                raise KeyError(
-                    "Key ({0}) in files ".format(key) +
-                    "does not have a corresponding key in account_types.")
-            if key not in self._accounts:
-                raise KeyError(
-                    "Key ({0}) in files ".format(key) +
-                    "does not have a corresponding key in any of assets, " +
-                    "liabilities, revenues, or expenses.")
+        self._accounts = dict(self._assets.items() +
+                              self._liabilities.items() +
+                              self._revenues.items() +
+                              self._expenses.items())
 
     def convert(self, date, debit, credit, amount, memo):
         """
@@ -201,10 +184,10 @@ class QifConverter(TransactionConverter):
             raise ValueError(
                 "amount ({0}) cannot be converted to float".format(amount))
 
-        if debit in self.expenses:
+        if debit in self._expenses:
             # Amount should be negative.
             return '-' + formatted_amount
-        else if debit in self.accounts:
+        elif debit in self._accounts:
             return formatted_amount
         else:
             raise KeyError("account key ({0}) does not exist".format(debit))
@@ -234,18 +217,18 @@ class QifConverter(TransactionConverter):
         """
         try:
             return time.strftime("%m/%d/%Y", date)
-        except TypeError as err:
+        except TypeError as e:
             raise TypeError(
                 "date ({0}) cannot be converted to MM/DD/YYYY ".format(date) +
-                "because {1}".format(err.message))
+                "because {0}".format(e.message))
         except ValueError as e:
             raise ValueError(
                 "date ({0}) cannot be converted to MM/DD/YYYY ".format(date) +
-                "because {1}".format(err.message))
+                "because {0}".format(e.message))
         except OverflowError as e:
             raise OverflowError(
                 "date ({0}) cannot be converted to MM/DD/YYYY ".format(date) +
-                "because {1}".format(err.message))
+                "because {0}".format(e.message))
 
     def _get_qif_file(self, debit, credit):
         """
@@ -268,10 +251,14 @@ class QifConverter(TransactionConverter):
         Debit key has priority so if both debit and credit key has an
         associated QIF file than the QIF file associated with the debit
         key is returned.
+
+        This is linked with get_transfer_account. If the QIF file returned
+        from this is from the debit key then the transfer account must be
+        from the credit key and vice versa.
         """
         if debit in self._files:
             return self._files[debit]
-        else if credit in self._files:
+        elif credit in self._files:
             return self._files[credit]
         else:
             raise KeyError(
@@ -280,13 +267,50 @@ class QifConverter(TransactionConverter):
                 "has an associated QIF file")
 
     def _get_transfer_account(self, debit, credit):
-    # TODO: add explanation for transfer account.
-        """Convert transfer account based on debit and credit."""
-        self.validate_file(debit, credit)
+        """
+        Get the associated QIF account from the debit and credit keys.
+
+        Parameters
+        ----------
+        debit : str
+            Account key for the debit of a transaction.
+        credit : str
+            Account key for the credit of a transaction.
+
+        Raises
+        ------
+        KeyError
+            If neither key has an associated QIF file.
+            If neither key has an associated QIF account.
+
+        Notes
+        -----
+        Credit key has priority so if both debit and credit key has an
+        associated QIF account than the QIF account associated with the
+        credit key is returned.
+
+        This is linked with get_qif_file. If the transfer account returned
+        from this is from the credit key then the QIF file must be from the
+        debit key and vice versa.
+        """
         if debit in self.filenames:
-            return self.accounts[credit]
+            key = credit
+        elif credit in self.filenames:
+            key = debit
         else:
-            return self.accounts[debit]
+            raise KeyError(
+                "neither debit key ({0}) ".format(debit) +
+                "or credit key ({0}) ".format(credit) +
+                "has an associated QIF file")
+
+        if key in self._accounts:
+            return self._accounts[key]
+        else:
+            raise KeyError(
+                "neither debit key ({0}) ".format(debit) +
+                "or credit key ({0}) ".format(credit) +
+                "has an associated QIF account in " +
+                "assets, liabilities, revenues, or expenses.")
 
     # LOGGING
     def _log_transaction(self, date, filename, transfer, amount, memo):
