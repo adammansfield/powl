@@ -1,4 +1,5 @@
 """Provides conversion for transaction data into an exchange format."""
+import textwrap
 import time
 
 class TransactionConverter(object):
@@ -70,6 +71,7 @@ class QifConverter(TransactionConverter):
                               self._liabilities.items() +
                               self._revenues.items() +
                               self._expenses.items())
+        # TODO: assert that every key in files is in accounts
 
     def convert(self, date, debit, credit, amount, memo):
         """
@@ -100,9 +102,9 @@ class QifConverter(TransactionConverter):
         Since it depends which QIF file records the transaction, the return
         value also contains the file to write to.
         """
-        qif_date = self._convert_date(date)
+        qif_date = self._format_date(date)
         qif_transfer = self._get_transfer_account(debit, credit)
-        qif_amount = self._convert_amount(debit, credit)
+        qif_amount = self._format_amount(debit, credit)
         qif_memo = memo
         qif_record = self._format_qif_transaction(qif_date,
                                                   qif_transfer,
@@ -118,44 +120,17 @@ class QifConverter(TransactionConverter):
             qif_memo)
         return qif_record, qif_file
 
-    # QIF FILE FORMATTING
-    def _get_templates(self):
+    def _create_qif_templates(self):
         templates = []
         for key, filename in self.filenames.iteritems():
             account_name = self.accounts.get(key)
             account_type = self.types.get(key)
-            header = self.format_qif_header(account_name, account_type)
+            header = self._format_qif_header(account_name, account_type)
             template = (filename, header)
             templates.append(template)
         return templates
 
-    def _format_qif_record(self, date, transfer, amount, memo):
-        """Formats qif data into a transaction for a QIF file."""
-        data = { 'date': date,
-                 'amount': amount,
-                 'transfer': transfer,
-                 'memo': memo }
-        transaction = textwrap.dedent("""\
-            D{date}
-            T{amount}
-            L{transfer}
-            M{memo}
-            ^""".format(**data))
-        return transaction
-
-    def _format_qif_header(self, account_name, account_type):
-        """Format an account name and type into a header for a QIF file."""
-        data = { 'name': account_name, 'type': account_type }
-        header = textwrap.dedent("""\
-            !Account
-            N{name}
-            T{type}
-            ^
-            !Type:{type}""".format(**data))
-        return header
-
-    # QIF RECORD CONVERSION
-    def _convert_amount(self, debit, amount):
+    def _format_amount(self, debit, amount):
         """
         Convert amount to QIF format based on debit.
 
@@ -192,7 +167,7 @@ class QifConverter(TransactionConverter):
         else:
             raise KeyError("account key ({0}) does not exist".format(debit))
 
-    def _convert_date(self, date):
+    def _format_date(self, date):
         """
         Convert struct_time to QIF date format (MM/DD/YYYY).
 
@@ -229,6 +204,41 @@ class QifConverter(TransactionConverter):
             raise OverflowError(
                 "date ({0}) cannot be converted to MM/DD/YYYY ".format(date) +
                 "because {0}".format(e.message))
+
+    def _format_qif_header(self, account_name, account_type):
+        """Format an account name and type into a header for a QIF file."""
+        data = { 'name': account_name, 'type': account_type }
+        header = textwrap.dedent("""\
+            !Account
+            N{name}
+            T{type}
+            ^
+            !Type:{type}""".format(**data))
+        return header
+
+    def _format_qif_record(self, date, transfer, amount, memo):
+        """
+        Formats qif data into a transaction for a QIF file.
+
+        Parameters
+        ----------
+        date : str
+            Date of the transaction
+        transfer : str
+            Transfer QIF account.
+        amount : str
+            Formatted amount.
+        memo : str
+            Description of the transaction.
+        """
+        return textwrap.dedent(
+            """\
+            D{0}
+            T{1}
+            L{2}
+            M{3}
+            ^""".format(date, amount, transfer, memo))
+
 
     def _get_qif_file(self, debit, credit):
         """
@@ -312,7 +322,6 @@ class QifConverter(TransactionConverter):
                 "has an associated QIF account in " +
                 "assets, liabilities, revenues, or expenses.")
 
-    # LOGGING
     def _log_transaction(self, date, filename, transfer, amount, memo):
         """
         Debug logs the transaction.
