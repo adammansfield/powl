@@ -7,16 +7,16 @@ class Action(object):
     """
 
     def do(self, string, date):
-    """
-    Perform an action on the given string.
+        """
+        Perform an action on the given string.
 
-    Parameters
-    ----------
-    string : str
-        A string containing data for the action.
-    date : time.struct_time
-        Date associated with the action.
-    """
+        Parameters
+        ----------
+        string : str
+            A string containing data for the action.
+        date : time.struct_time
+            Date associated with the action.
+        """
         pass
 
 
@@ -122,7 +122,7 @@ class TransactionAction(Action):
 
     def do(self, string, date):
         """
-        Convert and output transaction to a QIF file.
+        Convert and output transaction to a financial format file.
 
         Parameters
         ----------
@@ -133,7 +133,12 @@ class TransactionAction(Action):
         """
         data = self._parser.parse(string)
 
-        financial_data, financial_file = self._converter.convert(data)
+        financial_data, financial_file = self._converter.convert(
+            date,
+            data.debit,
+            data.credit,
+            data.amount,
+            data.memo)
         financial_file.append_line(financial_data)
 
         self._log.info(
