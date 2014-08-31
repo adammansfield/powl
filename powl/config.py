@@ -8,15 +8,13 @@ import powl.output as output
 class Config:
 
     # CONSTANTS
-    _config_filepath = 'config.cfg'
+    _config_filename = 'config.cfg'
     _transaction_dir = 'transactions'
     
-    # DEFAULTS
     _default_server = 'imap.gmail.com'
     _default_mailbox = 'inbox'
     _default_output_dir = os.path.join(os.getcwd(), 'output')
 
-    # CONFIG SECTIONS AND KEYS
     _email_section = 'Email'
     _email_server = 'server'
     _email_address = 'address'
@@ -31,7 +29,6 @@ class Config:
     _revenues_section = 'Revenues'
     _expenses_section = 'Expenses'
 
-    # CONFIG FILE
     _config_section_keys = {
         'email_section': _email_section,
         'email_server': _email_server,
@@ -70,23 +67,49 @@ class Config:
         [{expenses_section}]""".format(**_config_section_keys) 
     )
 
-    # FILE I/O
-    def _get_configparser(self):
-        """Read from config file to get config parser."""
-        self._config = ConfigParser.ConfigParser()
-        try:
-            with open(self._config_filepath) as fp:
-                self._config.readfp(fp)
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
+    def __init__(self, folder):
+        """
+        Initialize and set config folder.
 
-    # LOADING SETTINGS
-    def _load_all_settings(self):
-        """Load all the settings from each subsection."""
+        Args:
+            folder (powl.filesystem.Folder): Folder containing config files.
+        """
+        self._folder = folder
+
+        if folder.file_exists(self._config_filename):
+            file_object = folder.get_file(self._config_filename)
+        else:
+            file_object = folder.get_file(self._config_filename)
+            file_object.write(self._config_template)
+
+        self._config = ConfigParser.ConfigParser()
+        with open(file_object.path) as fp:
+            self._config.readfp(fp)
+
+        self._load_accounting_settings()
         self._load_email_settings()
         self._load_folders_settings()
-        self._load_qif_settings()
+
+    def _load_accounting_settings(self):
+        """Load the settings from the accounting sections."""
+        self.qif_filenames = dict(
+            self._config.items(self._accounting_filenames_section)
+        )
+        self.qif_types = dict(
+            self._config.items(self._accounting_types_section)
+        )
+        self.qif_assets = dict(
+            self._config.items(self._assets_section)
+        )
+        self.qif_liabilities = dict(
+            self._config.items(self._liabilities_section)
+        )
+        self.qif_revenues = dict(
+            self._config.items(self._revenues_section)
+        )
+        self.qif_expenses = dict(
+            self._config.items(self._expenses_section)
+        )
 
     def _load_email_settings(self):
         """Load the settings from the email section."""
@@ -114,35 +137,3 @@ class Config:
             self.output_dir,
             self.transaction_dir
         ]
-
-    def _load_qif_settings(self):
-        """Load the settings from the qif sections."""
-        self.qif_filenames = dict(
-            self._config.items(self._accounting_filenames_section)
-        )
-        self.qif_types = dict(
-            self._config.items(self._accounting_types_section)
-        )
-        self.qif_assets = dict(
-            self._config.items(self._assets_section)
-        )
-        self.qif_liabilities = dict(
-            self._config.items(self._liabilities_section)
-        )
-        self.qif_revenues = dict(
-            self._config.items(self._revenues_section)
-        )
-        self.qif_expenses = dict(
-            self._config.items(self._expenses_section)
-        )
-
-    #  CHECKING, READING, LODAING
-    def read(self):
-        """Check if config exists and load all settings."""
-        self._get_configparser()
-        self._load_all_settings()
-
-    def check_file(self):
-        if not os.path.isfile(self._config_filepath):
-            output.write(self._config_filepath,
-                         self._config_template)
