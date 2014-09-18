@@ -385,5 +385,26 @@ class TestTransactionConverter(unittest.TestCase):
         actual_account = self._converter._get_transfer_account(debit, credit)
         self.assertEqual(expected_account, actual_account)
 
+    # __init__()
+    def test__init__throw_if_key_in_files_is_not_in_accounts(self):
+        """
+        Test to ensure that all keys in files must exist in accounts.
+        """
+        extra_key = "filekey"
+        extra_file = MockFile("./", "filekey.qif")
+        files = dict(
+            self._FILES.items() +
+            [(extra_key, extra_file)])
+        expected_message = (
+            "account key ({0}) ".format(extra_key) +
+            "for file ({0}) ".format(extra_file.filename) +
+            "does not have has an associated QIF account")
+        with self.assertRaises(KeyError) as context:
+            QifConverter(
+                self._log, files, self._ACCOUNT_TYPES, self._ASSETS,
+                self._LIABILITIES, self._REVENUES, self._EXPENSES)
+        actual_message = context.exception.message
+        self.assertEqual(expected_message, actual_message)
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)

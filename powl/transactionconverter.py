@@ -40,7 +40,8 @@ class QifConverter(TransactionConverter):
         log : powl.logwriter.Log
             Used to log.
         files : dict of powl.filesystem.File
-            Map of account key to files.
+            Map of account key to files. Every key in files must exist in
+            either of assets, liabilities, revenues, or expenses.
         account_types : dict
             Map of account key to QIF account types.
         assets : dict
@@ -67,11 +68,18 @@ class QifConverter(TransactionConverter):
         self._revenues = revenues
         self._expenses = expenses
 
-        self._accounts = dict(self._assets.items() +
-                              self._liabilities.items() +
-                              self._revenues.items() +
-                              self._expenses.items())
-        # TODO: assert that every key in files is in accounts
+        self._accounts = dict(
+            self._assets.items() +
+            self._liabilities.items() +
+            self._revenues.items() +
+            self._expenses.items())
+
+        for key, value in self._files.items():
+            if key not in self._accounts.keys():
+                raise KeyError(
+                    "account key ({0}) ".format(key) +
+                    "for file ({0}) ".format(value.filename) +
+                    "does not have has an associated QIF account")
 
     def convert(self, date, debit, credit, amount, memo):
         """
