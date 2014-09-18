@@ -385,7 +385,7 @@ class TestQifConverter(unittest.TestCase):
         self.assertEqual(expected_account, actual_account)
 
     # __init__()
-    def test__init__throw_if_key_in_files_is_not_in_accounts(self):
+    def test__init__key_in_files_is_not_in_accounts(self):
         """
         Test to ensure that all keys in files must exist in accounts.
         """
