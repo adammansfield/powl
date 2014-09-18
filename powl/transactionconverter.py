@@ -104,12 +104,13 @@ class QifConverter(TransactionConverter):
         """
         qif_date = self._format_date(date)
         qif_transfer = self._get_transfer_account(debit, credit)
-        qif_amount = self._format_amount(debit, credit)
+        qif_amount = self._format_amount(debit, amount)
         qif_memo = memo
-        qif_record = self._format_qif_transaction(qif_date,
-                                                  qif_transfer,
-                                                  qif_amount,
-                                                  qif_memo)
+        qif_record = self._format_qif_record(
+            qif_date,
+            qif_transfer,
+            qif_amount,
+            qif_memo)
         qif_file = self._get_qif_file(debit, credit)
 
         self._log_transaction(

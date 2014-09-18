@@ -71,19 +71,31 @@ class TestTransactionConverter(unittest.TestCase):
             self._EXPENSES)
 
     # convert() tests.
-    @unittest.skip("TODO: impl")
     def test__convert(self):
-        date = None
-        debit = ""
-        credit = ""
-        amount = ""
-        memo = ""
+        date = time.localtime()
+        debit = self._EXPENSES.keys()[0]
+        credit = self._FILES.keys()[0]
+        amount = "5.25"
+        memo = "purchased supplies"
+
+        qif_date = time.strftime("%m/%d/%Y", date)
+        qif_amount = "-5.25"
+        qif_transfer = self._EXPENSES[debit]
+
+        expected_file = self._FILES[credit]
+        expected_record = textwrap.dedent(
+            """\
+            D{0}
+            T{1}
+            L{2}
+            M{3}
+            ^""".format(qif_date, qif_amount, qif_transfer, memo))
 
         actual_record, actual_file = self._converter.convert(
             date, debit, credit, amount, memo)
 
-        self.assertEqual("", actual_record)
-        self.assertEqual(None, actual_file)
+        self.assertEqual(expected_record, actual_record)
+        self.assertEqual(expected_file, actual_file)
 
     # _format_qif_record() tests.
     def test__format_qif_record__expected_output(self):
@@ -341,7 +353,7 @@ class TestTransactionConverter(unittest.TestCase):
         actual = self._converter._get_transfer_account(debit, credit)
         self.assertEqual(expected, actual)
 
-    def test_get_transfer_account__account_key_not_in_accounts(self):
+    def test__get_transfer_account__account_key_not_in_accounts(self):
         """
         Test for accounts with associated QIF files but with no
         associated account.
@@ -357,7 +369,7 @@ class TestTransactionConverter(unittest.TestCase):
         self.assertEqual(expected_message, actual_message)
 
     # _get_transfer_account() with _get_qif_file() tests.
-    def test_get_transfer_account_and_get_qif_file_return_unique(self):
+    def test__get_transfer_account_and_get_qif_file_return_unique(self):
         """
         Test to ensure that if get_transfer_account returned the debit acount
         then get_qif_file returned the credit file and vice versa.
