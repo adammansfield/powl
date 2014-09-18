@@ -303,9 +303,9 @@ class QifConverter(TransactionConverter):
         from this is from the credit key then the QIF file must be from the
         debit key and vice versa.
         """
-        if debit in self.filenames:
+        if debit in self._files:
             key = credit
-        elif credit in self.filenames:
+        elif credit in self._files:
             key = debit
         else:
             raise KeyError(
@@ -317,10 +317,8 @@ class QifConverter(TransactionConverter):
             return self._accounts[key]
         else:
             raise KeyError(
-                "neither debit key ({0}) ".format(debit) +
-                "or credit key ({0}) ".format(credit) +
-                "has an associated QIF account in " +
-                "assets, liabilities, revenues, or expenses.")
+                "account key ({0}) ".format(key) +
+                "does not have has an associated QIF account")
 
     def _log_transaction(self, date, filename, transfer, amount, memo):
         """

@@ -13,54 +13,52 @@ class TestTransactionConverter(unittest.TestCase):
     Class for testing the transaction action.
     """
 
-    _FILES = {
-        "cash":       MockFile("./", "cash.qif"),
-        "chequing":   MockFile("./", "chequing.qif"),
-        "visa":       MockFile("./", "visa.qif"),
-        "mastercard": MockFile("./", "mastercard.qif")
-    }
-    _FILES_KEYS = _FILES.keys()
-
-    _ACCOUNT_TYPES = {
-        "cash":       "Cash",
-        "chequing":   "Bank",
-        "visa":       "CCard",
-        "mastercard": "CCard"
-    }
-    _ACCOUNT_TYPES_KEYS = _ACCOUNT_TYPES.keys()
-
-    _ASSETS = {
-        "cash":       "Assets:Cash",
-        "chequing":   "Assets:Chequing",
-        "savings":    "Assets:Savings",
-        "portfolio":  "Assets:Portfolio"
-    }
-    _ASSETS_KEYS = _ASSETS.keys()
-
-    _LIABILITIES = {
-        "visa":       "Liabilities:Visa",
-        "mastercard": "Liabilities:Mastercard",
-        "loan":       "Liabilities:Loan",
-        "payable":    "Liabilities:Payable"
-    }
-    _LIABILITIES_KEYS = _LIABILITIES.keys()
-
-    _REVENUES = {
-        "earnings":   "Revenue:Earnings",
-        "interest":   "Revenue:Interest",
-        "capgain":    "Revenue:Capital Gains",
-        "dividends":  "Revenue:Dividends"
-    }
-    _REVENUES_KEYS = _REVENUES.keys()
-
-    _EXPENSES = {
-        "food":       "Expenses:Food",
-        "rent":       "Expenses:Rent",
-        "utilities":  "Expenses:Utilities"
-    }
-    _EXPENSES_KEYS = _EXPENSES.keys()
-
     def setUp(self):
+        self._FILES = {
+            "cash":       MockFile("./", "cash.qif"),
+            "chequing":   MockFile("./", "chequing.qif"),
+            "visa":       MockFile("./", "visa.qif"),
+            "mastercard": MockFile("./", "mastercard.qif")}
+
+        self._ACCOUNT_TYPES = {
+            "cash":       "Cash",
+            "chequing":   "Bank",
+            "visa":       "CCard",
+            "mastercard": "CCard"}
+
+        self._ASSETS = {
+            "cash":       "Assets:Cash",
+            "chequing":   "Assets:Chequing",
+            "savings":    "Assets:Savings",
+            "portfolio":  "Assets:Portfolio"}
+
+        self._LIABILITIES = {
+            "visa":       "Liabilities:Visa",
+            "mastercard": "Liabilities:Mastercard",
+            "loan":       "Liabilities:Loan",
+            "payable":    "Liabilities:Payable"}
+
+        self._REVENUES = {
+            "earnings":   "Revenue:Earnings",
+            "interest":   "Revenue:Interest",
+            "capgain":    "Revenue:Capital Gains",
+            "dividends":  "Revenue:Dividends"}
+
+        self._EXPENSES = {
+            "food":       "Expenses:Food",
+            "rent":       "Expenses:Rent",
+            "utilities":  "Expenses:Utilities"}
+
+        self._ACCOUNTS = dict(
+            self._ASSETS.items() +
+            self._LIABILITIES.items() +
+            self._REVENUES.items() +
+            self._EXPENSES.items())
+
+        self._ACCOUNTS_WITHOUT_FILE = {
+            k:v for k,v in self._ACCOUNTS.items()
+            if k not in self._FILES.keys()}
+
         self._log = MockLogWriter()
 
         self._converter = QifConverter(
@@ -112,19 +110,19 @@ class TestTransactionConverter(unittest.TestCase):
         """
         Test for an amount that cannot be converted to float.
         """
-        debit = self._ASSETS_KEYS[0]
+        debit = self._ASSETS.keys()[0]
         amount = "5.01a"
-        expected = "amount ({0}) cannot be converted to float".format(amount)
+        expected_message = "amount ({0}) cannot be converted to float".format(amount)
         with self.assertRaises(ValueError) as context:
             self._converter._format_amount(debit, amount)
-        actual = context.exception.message
-        self.assertEqual(expected, actual)
+        actual_message = context.exception.message
+        self.assertEqual(expected_message, actual_message)
 
     def test__format_amount__debit_is_expense(self):
         """
         Test for output amount when debit is an expense.
         """
-        debit = self._EXPENSES_KEYS[0]
+        debit = self._EXPENSES.keys()[0]
         amount = "25.15"
         expected = "-25.15"
         actual = self._converter._format_amount(debit, amount)
@@ -134,7 +132,7 @@ class TestTransactionConverter(unittest.TestCase):
         """
         Test for output amount when debit is not an expense.
         """
-        debit = self._ASSETS_KEYS[0]
+        debit = self._ASSETS.keys()[0]
         amount = "10.75"
         expected = "10.75"
         actual = self._converter._format_amount(debit, amount)
@@ -146,17 +144,17 @@ class TestTransactionConverter(unittest.TestCase):
         """
         debit = "non-existant account"
         amount = "10.00"
-        expected = "account key ({0}) does not exist".format(debit)
+        expected_message = "account key ({0}) does not exist".format(debit)
         with self.assertRaises(KeyError) as context:
             self._converter._format_amount(debit, amount)
-        actual = context.exception.message
-        self.assertEqual(expected, actual)
+        actual_message = context.exception.message
+        self.assertEqual(expected_message, actual_message)
 
     def test__format_amount__output_is_two_decimal_places(self):
         """
         Test various inputs that output is two decimal places.
         """
-        debit = self._ASSETS_KEYS[0]
+        debit = self._ASSETS.keys()[0]
 
         amount = "5"
         expected = "5.00"
@@ -198,13 +196,13 @@ class TestTransactionConverter(unittest.TestCase):
         Test for a date that cannot be converted to C long.
         """
         date = (9999999999,0,0,0,0,0,0,0,0)
-        expected = (
+        expected_message = (
             "date ({0}) cannot be converted to MM/DD/YYYY ".format(date) +
             "because Python int too large to convert to C long")
         with self.assertRaises(OverflowError) as context:
             self._converter._format_date(date)
-        actual = context.exception.message
-        self.assertEqual(expected, actual)
+        actual_message = context.exception.message
+        self.assertEqual(expected_message, actual_message)
 
     def test__format_date__past_date(self):
         """
@@ -220,13 +218,13 @@ class TestTransactionConverter(unittest.TestCase):
         Test for a date that is invalid.
         """
         date = "invalid date type"
-        expected = (
+        expected_message = (
             "date ({0}) cannot be converted to MM/DD/YYYY ".format(date) +
             "because argument must be 9-item sequence, not str")
         with self.assertRaises(TypeError) as context:
             self._converter._format_date(date)
-        actual = context.exception.message
-        self.assertEqual(expected, actual)
+        actual_message = context.exception.message
+        self.assertEqual(expected_message, actual_message)
 
     def test__format_date__value_error(self):
         """
@@ -248,8 +246,8 @@ class TestTransactionConverter(unittest.TestCase):
         credit key (that has an associated file). Expect back the file
         associated with the debit key since it has higher priority.
         """
-        debit = self._FILES_KEYS[0]
-        credit = self._FILES_KEYS[1]
+        debit = self._FILES.keys()[0]
+        credit = self._FILES.keys()[1]
         expected = self._FILES[debit]
         actual = self._converter._get_qif_file(debit, credit)
         self.assertEqual(expected, actual)
@@ -259,24 +257,24 @@ class TestTransactionConverter(unittest.TestCase):
         Test for a invalid debit key (that has no associated file) and an
         invalid credit key (that has no associated file).
         """
-        debit = "invalid debit key"
-        credit = "invalid credit key"
-        expected = (
+        debit = self._ACCOUNTS_WITHOUT_FILE.keys()[0]
+        credit = self._ACCOUNTS_WITHOUT_FILE.keys()[1]
+        expected_message = (
             "neither debit key ({0}) ".format(debit) +
             "or credit key ({0}) ".format(credit) +
             "has an associated QIF file")
         with self.assertRaises(KeyError) as context:
             self._converter._get_qif_file(debit, credit)
-        actual = context.exception.message
-        self.assertEqual(expected, actual)
+        actual_message = context.exception.message
+        self.assertEqual(expected_message, actual_message)
 
     def test__get_qif_file__debit_has_file_and_credit_has_no_file(self):
         """
         Test for a valid debit key (that has an associated file) and an
         invalid credit key (that has no associated file).
         """
-        debit = self._FILES_KEYS[0]
-        credit = "invaild key"
+        debit = self._FILES.keys()[0]
+        credit = self._ACCOUNTS_WITHOUT_FILE.keys()[0]
         expected = self._FILES[debit]
         actual = self._converter._get_qif_file(debit, credit)
         self.assertEqual(expected, actual)
@@ -286,55 +284,94 @@ class TestTransactionConverter(unittest.TestCase):
         Test for a invalid debit key (that has no associated file) and a
         valid credit (that has an associated file).
         """
-        debit = "invalid key"
-        credit = self._FILES_KEYS[1]
+        debit = self._ACCOUNTS_WITHOUT_FILE.keys()[0]
+        credit = self._FILES.keys()[0]
         expected = self._FILES[credit]
         actual = self._converter._get_qif_file(debit, credit)
         self.assertEqual(expected, actual)
 
     # _get_transfer_account() tests.
-    def test__get_transfer_account__both_have_file_both_are_accounts(self):
+    def test__get_transfer_account__both_have_file(self):
         """
         Test for debit and credit keys that both have have associated QIF
-        files and associated QIF accounts.
+        files and associated QIF accounts. Expect back the account
+        associated with the credit key since it has lower priority.
         """
-        pass
+        debit = self._FILES.keys()[0]
+        credit = self._FILES.keys()[1]
+        expected = self._ACCOUNTS[credit]
+        actual = self._converter._get_transfer_account(debit, credit)
+        self.assertEqual(expected, actual)
 
     def test__get_transfer_account__both_have_no_file(self):
         """
         Test for a invalid debit key (that has no associated file) and an
         invalid credit key (that has no associated file).
         """
-        pass
+        debit = self._ACCOUNTS_WITHOUT_FILE.keys()[0]
+        credit = self._ACCOUNTS_WITHOUT_FILE.keys()[1]
+        expected_message = (
+            "neither debit key ({0}) ".format(debit) +
+            "or credit key ({0}) ".format(credit) +
+            "has an associated QIF file")
+        with self.assertRaises(KeyError) as context:
+            self._converter._get_transfer_account(debit, credit)
+        actual_message = context.exception.message
+        self.assertEqual(expected_message, actual_message)
 
     def test__get_transfer_account__debit_has_file_and_credit_has_no_file(self):
         """
         Test for a valid debit key (that has an associated file) and a
         valid credit key (that has no associated file).
         """
-        pass
+        debit = self._FILES.keys()[0]
+        credit = self._ACCOUNTS_WITHOUT_FILE.keys()[0]
+        expected = self._ACCOUNTS[credit]
+        actual = self._converter._get_transfer_account(debit, credit)
+        self.assertEqual(expected, actual)
 
     def test__get_transfer_account__debit_has_no_file_and_credit_has_file(self):
         """
         Test for a valid debit key (that has no associated file) and a
         valid credit (that has an associated file).
         """
-        pass
+        debit = self._ACCOUNTS_WITHOUT_FILE.keys()[0]
+        credit = self._FILES.keys()[1]
+        expected = self._ACCOUNTS[debit]
+        actual = self._converter._get_transfer_account(debit, credit)
+        self.assertEqual(expected, actual)
 
-    def test_get_transfer_account__file_key_not_in_accounts(self):
+    def test_get_transfer_account__account_key_not_in_accounts(self):
         """
         Test for accounts with associated QIF files but with no
         associated account.
         """
-        pass
+        debit = "invalid account key"
+        credit = self._FILES.keys()[0]
+        expected_message = (
+            "account key ({0}) ".format(debit) +
+            "does not have has an associated QIF account")
+        with self.assertRaises(KeyError) as context:
+            self._converter._get_transfer_account(debit, credit)
+        actual_message = context.exception.message
+        self.assertEqual(expected_message, actual_message)
 
     # _get_transfer_account() with _get_qif_file() tests.
     def test_get_transfer_account_and_get_qif_file_return_unique(self):
         """
-        Test to ensure that if get_transfer_account returned the debit
-        then get_qif_file returned the credit and vice versa.
+        Test to ensure that if get_transfer_account returned the debit acount
+        then get_qif_file returned the credit file and vice versa.
         """
-        pass
+        debit = self._FILES.keys()[0]
+        credit = self._FILES.keys()[1]
+
+        expected_file = self._FILES[debit]
+        actual_file = self._converter._get_qif_file(debit, credit)
+        self.assertEqual(expected_file, actual_file)
+
+        expected_account = self._ACCOUNTS[credit]
+        actual_account = self._converter._get_transfer_account(debit, credit)
+        self.assertEqual(expected_account, actual_account)
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
