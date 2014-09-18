@@ -1,16 +1,15 @@
 #!/usr/bin/env python
-"""Tests for TransactionAction in powl.action."""
+"""Tests for powl.transactionconverter.py."""
 import textwrap
 import time
 import unittest
 from powl.transactionconverter import QifConverter
 from test.mock.filesystem import MockFile
 from test.mock.logwriter import MockLogWriter
-from test.mock.parser import MockParser
 
-class TestTransactionConverter(unittest.TestCase):
+class TestQifConverter(unittest.TestCase):
     """
-    Class for testing the transaction action.
+    Class for testing the QifConverter.
     """
 
     def setUp(self):
