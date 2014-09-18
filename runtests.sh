@@ -2,4 +2,4 @@
 echo
 echo "transactionconverter.py"
 echo "======================="
-python test/transactionconverter_test.py
+python test/transactionconverter.test.py
