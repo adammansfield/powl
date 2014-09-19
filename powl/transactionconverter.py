@@ -76,7 +76,7 @@ class QifConverter(TransactionConverter):
 
         for key, value in self._files.items():
             if key not in self._accounts.keys():
-                raise KeyError(
+                raise ValueError(
                     "account key ({0}) ".format(key) +
                     "for file ({0}) ".format(value.filename) +
                     "does not have has an associated QIF account")

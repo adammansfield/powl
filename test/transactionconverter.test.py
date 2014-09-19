@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-"""Tests for powl.transactionconverter.py."""
+"""Tests for powl.transactionconverter."""
 import textwrap
 import time
 import unittest
-from powl.transactionconverter import QifConverter
-from test.mock.filesystem import MockFile
-from test.mock.logwriter import MockLogWriter
+from powl import transactionconverter
+from test.mock import filesystem
+from test.mock import log
 
 class TestQifConverter(unittest.TestCase):
     """
@@ -14,38 +14,27 @@ class TestQifConverter(unittest.TestCase):
 
     def setUp(self):
         self._FILES = {
-            "cash":       MockFile("./", "cash.qif"),
-            "chequing":   MockFile("./", "chequing.qif"),
-            "visa":       MockFile("./", "visa.qif"),
-            "mastercard": MockFile("./", "mastercard.qif")}
+            "cash":       filesystem.MockFile("./", "cash.qif"),
+            "chequing":   filesystem.MockFile("./", "chequing.qif")}
 
         self._ACCOUNT_TYPES = {
             "cash":       "Cash",
-            "chequing":   "Bank",
-            "visa":       "CCard",
-            "mastercard": "CCard"}
+            "chequing":   "Bank"}
 
         self._ASSETS = {
             "cash":       "Assets:Cash",
-            "chequing":   "Assets:Chequing",
-            "savings":    "Assets:Savings",
-            "portfolio":  "Assets:Portfolio"}
+            "chequing":   "Assets:Chequing"}
 
         self._LIABILITIES = {
             "visa":       "Liabilities:Visa",
-            "mastercard": "Liabilities:Mastercard",
-            "loan":       "Liabilities:Loan",
-            "payable":    "Liabilities:Payable"}
+            "mastercard": "Liabilities:Mastercard"}
 
         self._REVENUES = {
             "earnings":   "Revenue:Earnings",
-            "interest":   "Revenue:Interest",
-            "capgain":    "Revenue:Capital Gains",
-            "dividends":  "Revenue:Dividends"}
+            "interest":   "Revenue:Interest"}
 
         self._EXPENSES = {
             "food":       "Expenses:Food",
-            "rent":       "Expenses:Rent",
             "utilities":  "Expenses:Utilities"}
 
         self._ACCOUNTS = dict(
@@ -58,9 +47,9 @@ class TestQifConverter(unittest.TestCase):
             k:v for k,v in self._ACCOUNTS.items()
             if k not in self._FILES.keys()}
 
-        self._log = MockLogWriter()
+        self._log = log.MockLog()
 
-        self._converter = QifConverter(
+        self._converter = transactionconverter.QifConverter(
             self._log,
             self._FILES,
             self._ACCOUNT_TYPES,
@@ -390,7 +379,7 @@ class TestQifConverter(unittest.TestCase):
         Test to ensure that all keys in files must exist in accounts.
         """
         extra_key = "filekey"
-        extra_file = MockFile("./", "filekey.qif")
+        extra_file = filesystem.MockFile("./", "filekey.qif")
         files = dict(
             self._FILES.items() +
             [(extra_key, extra_file)])
@@ -398,8 +387,8 @@ class TestQifConverter(unittest.TestCase):
             "account key ({0}) ".format(extra_key) +
             "for file ({0}) ".format(extra_file.filename) +
             "does not have has an associated QIF account")
-        with self.assertRaises(KeyError) as context:
-            QifConverter(
+        with self.assertRaises(ValueError) as context:
+            transactionconverter.QifConverter(
                 self._log, files, self._ACCOUNT_TYPES, self._ASSETS,
                 self._LIABILITIES, self._REVENUES, self._EXPENSES)
         actual_message = context.exception.message
