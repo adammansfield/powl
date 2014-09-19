@@ -1,6 +1,6 @@
 """Provides a mock null object for logging."""
 
-class MockLogWriter(object):
+class MockLog(object):
 
     def critical(self, message, *args, **kwargs):
         pass
