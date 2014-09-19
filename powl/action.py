@@ -4,10 +4,10 @@ from powl import actiontype
 
 class ActionManager:
     """
-    Managers and provides methods for doing actions.
+    Manages and provides methods for doing actions.
     """
 
-    def __init__(self, log)
+    def __init__(self, log):
         """
         Parameters
         ----------
@@ -15,30 +15,39 @@ class ActionManager:
             Used to log.
         """
         self._log = log
-        self._accounting_action = accounting_action
-        self._body_composition_action = body_composition_action
-        self._note_action = note_action
+        self._action_type_to_action_map = {}
 
-        self._action_type_to_action_map = {
-            actiontype.ACCOUNTING: self._accounting_action,
-            actiontype.BODYCOMPOSITION: self._bodycomposition_action,
-            actiontype.NOTE: self._note_action}
+    def add_action(self, action_type, action):
+        """
+        Add an action and its type to the map.
+
+        Parameters
+        ----------
+        action_type : powl.actiontype
+            The type of the action.
+        action : powl.action.Action
+            The action object associated with the action type.
+        """
+        self._action_type_to_action_map[action_type] = action
 
     def do_action(self, action_type, action_data, action_date):
         """
         Do the specified action.
 
-        Args:
-            action_type: The type of action to do.
-            data: Action specific class containing all data required for the
-                specified action type.
+        Parameters
+        ----------
+        action_type : powl.actiontype
+            The type of action to do.
+        action_data : str
+            Formatted string containing action data.
+        action_date : time.struct_time
+            Date associated with the action.
         """
         try:
             action = self._action_type_to_action_map[action_type]
         except KeyError:
-            self._log.error(
-                "Action type '%s' is not in the action map",
-                action_type)
+            raise KeyError(
+                "action type ({0}) is unknown".format(action_type))
         else:
             try:
                 action.do(action_data, action_date)
