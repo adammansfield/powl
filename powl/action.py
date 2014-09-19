@@ -49,14 +49,7 @@ class ActionManager:
             raise KeyError(
                 "action type ({0}) is unknown".format(action_type))
         else:
-            try:
-                action.do(action_data, action_date)
-            except (IOError, OverflowError, TypeError, ValueError) as error:
-                self._log.error(
-                    "'%s' was raised by action '%s' with the message '%s'",
-                    type(error).__name__,
-                    action_type,
-                    error)
+            action.do(action_data, action_date)
 
 class Action(object):
     """

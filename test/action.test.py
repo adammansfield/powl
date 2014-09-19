@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Tests for powl.action."""
+import sys
 import time
 import unittest
 from powl import action
@@ -16,7 +17,7 @@ class TestActionManager(unittest.TestCase):
         self._log = mock_log.MockLog()
         self._action_manager = action.ActionManager(self._log)
 
-    def test__add_action__success(self):
+    def test__do_action__action_is_called(self):
         """
         Test action was successfully added.
         """
@@ -27,7 +28,7 @@ class TestActionManager(unittest.TestCase):
 
         self._action_manager.add_action(action_type, action_object)
         self._action_manager.do_action(action_type, data, date)
-        self.assertTrue(action_object.do_called)
+        self.assertTrue(action_object.do_called_with(data, date))
 
     def test__do_action__action_type_unknown(self):
         """
@@ -43,7 +44,6 @@ class TestActionManager(unittest.TestCase):
         actual_message = context.exception.message
         self.assertEqual(expected_message, actual_message)
 
-
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    unittest.main()
 
