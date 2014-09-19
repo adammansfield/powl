@@ -3,6 +3,7 @@
 import injector
 import sys
 from powl import action
+from powl import log
 from powl import parser
 from powl import retriever
 
@@ -19,6 +20,7 @@ class App:
             Container used to resolve objects to run the app.
         """
         self._action_manager = injector.get(action.ActionManager)
+        self._log = injector.get(log.Log)
         self._parser = injector.get(parser.ActionItemParser)
         self._retriever = injector.get(retriever.ActionItemRetriever)
 
@@ -26,10 +28,24 @@ class App:
         """
         Retrieve a list of input actions and perform them.
         """
-        items = self._retriever.get_action_items()
-        for item, date in items:
-            action_key, action_data = self._parser.parse(item)
-            self._action_manager.do_action(action_key, action_data, date)
+        try:
+            items = self._retriever.get_action_items()
+        except Exception as e:
+            self._log.error("unexpected error: {0}".format(e))
+        else:
+            for item, date in items:
+                try:
+                    log_message = "action ({0}) on {1}".format(
+                        item, time.strftime("%Y-%m-%d", date))
+                    self._log.info(log_message)
+                    action_key, action_data = self._parser.parse(item)
+                    self._action_manager.do_action(action_key, action_data,
+                                                   date)
+                except (KeyError, IOError, OverflowError, TypeError,
+                        ValueError) as e:
+                    self._log.error(e)
+                except Exception as e:
+                    self._log.error("unexpected error: {0}".format(e))
 
 def main(*args):
     injector = injector.Injector()
