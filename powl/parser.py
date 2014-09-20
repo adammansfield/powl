@@ -21,14 +21,52 @@ class Parser(object):
         pass
 
 
-class BodyCompositionDataParser(Parser):
+class ActionItemParser(Parser):
     """
-    Parses a formatted string containing body composition data.
+    Parses an item containing an action and its data.
+    """
+
+    _DELIMITER = ' '
+
+    def parse(self, item):
+        """
+        Parse an action item into an action type and its data.
+
+        Parameters
+        ----------
+        item : str
+            Item to parse.
+
+        Returns
+        -------
+        tuple of powl.actiontype and str
+            The action type and a string containing data for the action.
+
+        Raises
+        ------
+        KeyError
+            If the action_key is not in the action map.
+        ValueError
+            If a valid action was not parsed.
+        """
+        action_key, data = item.split(self._DELIMITER, 1)
+
+        try:
+            action_type = actiontype.ACTION_MAP[action_key]
+        except KeyError:
+            raise KeyError("action key ({0}) is invalid".format(action_key))
+        else:
+            return action_type, data
+
+
+class BodyCompositionDataFlagParser(Parser):
+    """
+    Parses a string containing body composition data.
     """
 
     _TOKEN_FLAG = '-'
     _TOKEN_MASS = '^m'
-    _TOKEN_FAT_PERCENTAGE = '^f'
+    _TOKEN_FAT = '^f'
 
     def parse(self, string):
         """
@@ -62,59 +100,24 @@ class BodyCompositionDataParser(Parser):
                 data.fat_percentage = data.fat_percentage.strip()
 
         if not data.mass:
-            raise ValueError("Mass was not parsed")
-        if not data.fat:
-            raise ValueError("Fat was not parsed")
+            raise ValueError("mass was not parsed from ({0})".format(string))
+        if not data.fat_percentage:
+            raise ValueError("fat percentage was not parsed from "
+                             "({0})".format(string))
 
         try:
             float(data.mass)
         except ValueError:
-            raise ValueError("Mass is not a number")
+            raise ValueError("mass is not a number ({0})".format(data.mass))
         try:
             float(data.fat_percentage)
         except ValueError:
-            raise ValueError("Fat percentage is not a number")
-
+            raise ValueError("fat percentage is not a number "
+                             "({0})".format(data.fat_percentage))
         return data
 
 
-class MessageParser(Parser):
-    """
-    Parses a formatted message containing an action and its data.
-    """
-
-    _DELIMITER = ' '
-
-    def parse(self, string):
-        """
-        Parse a message into an action and its data string.
-
-        Parameters
-        ----------
-        message : str
-            Message to parse.
-
-        Returns
-        -------
-        tuple of powl.actiontype and string
-            The action type and the string containing data for the action.
-
-        Raises
-        ------
-        ValueError
-            If a valid action was not parsed.
-        """
-        action_key, data = message.split(self._DELIMITER, 1)
-
-        try:
-            action_type = actiontype.ACTION_MAP[action_key]
-        except KeyError:
-            raise KeyError("action key ({0}) is invalid".format(action_key))
-        else:
-            return action_type, data
-
-
-class TransactionDataParser(Parser):
+class TransactionDataFlagParser(Parser):
     """
     Parses a formatted string containing accounting data.
     """
@@ -145,23 +148,23 @@ class TransactionDataParser(Parser):
             If amount is not a float.
             If a value for TransactionData is missing.
         """
-        data = actiondata.AccountingData()
+        data = actiondata.TransactionData()
         params = re.split(self._TOKEN_FLAG, string)
 
         for param in params:
-            if re.match(self._ACCOUNTING_TOKEN_DEBIT, param):
-                data.debit = re.sub(self._ACCOUNTING_TOKEN_DEBIT, '', param)
+            if re.match(self._TOKEN_DEBIT, param):
+                data.debit = re.sub(self._TOKEN_DEBIT, '', param)
                 data.debit = data.debit.strip()
-            elif re.match(self._ACCOUNTING_TOKEN_CREDIT, param):
-                data.credit = re.sub(self._ACCOUNTING_TOKEN_CREDIT, '', param)
-                data.credit = credit.strip()
-            elif re.match(self._ACCOUNTING_TOKEN_AMOUNT, param):
-                data.amount = re.sub(self._ACCOUNTING_TOKEN_AMOUNT, '', param)
-                data.amount = amount.strip()
-            elif re.match(self._ACCOUNTING_TOKEN_MEMO, param):
-                data.memo = re.sub(self._ACCOUNTING_TOKEN_MEMO, '', param)
-                data.memo = memo.replace("\"", '')
-                data.memo = memo.strip()
+            elif re.match(self._TOKEN_CREDIT, param):
+                data.credit = re.sub(self._TOKEN_CREDIT, '', param)
+                data.credit = data.credit.strip()
+            elif re.match(self._TOKEN_AMOUNT, param):
+                data.amount = re.sub(self._TOKEN_AMOUNT, '', param)
+                data.amount = data.amount.strip()
+            elif re.match(self._TOKEN_MEMO, param):
+                data.memo = re.sub(self._TOKEN_MEMO, '', param)
+                data.memo = data.memo.replace("\"", '')
+                data.memo = data.memo.strip()
 
         if not data.debit:
             raise ValueError("debit was not parsed")

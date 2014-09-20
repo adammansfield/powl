@@ -1,4 +1,4 @@
-"""Provides a mock parser to set the expected output."""
+"""Provides mock objects for powl.parse."""
 
 class MockParser(object):
 

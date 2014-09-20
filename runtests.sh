@@ -1,21 +1,12 @@
 #!/bin/sh
-echo
-echo "powl.action"
-echo "==========="
+echo "powl.action:"
 python test/action.test.py
 
-echo
-echo "powl.main"
-echo "========="
-python test/main.test.py
-
-echo
-echo "powl.parser"
-echo "==========="
+echo "\n"
+echo "powl.parser:"
 python test/parser.test.py
 
-echo
-echo "powl.transactionconverter"
-echo "========================="
+echo "\n"
+echo "powl.transactionconverter:"
 python test/transactionconverter.test.py
 
