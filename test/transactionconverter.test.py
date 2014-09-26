@@ -3,6 +3,7 @@
 import textwrap
 import time
 import unittest
+from powl import exception
 from powl import transactionconverter
 from test.mock import filesystem
 from test.mock import log
@@ -60,6 +61,9 @@ class TestQifConverter(unittest.TestCase):
 
     # convert() tests.
     def test__convert(self):
+        """
+        Test sample transaction to convert to QIF format.
+        """
         date = time.localtime()
         debit = self._EXPENSES.keys()[0]
         credit = self._FILES.keys()[0]
@@ -115,7 +119,7 @@ class TestQifConverter(unittest.TestCase):
         expected_message = "amount ({0}) cannot be converted to float".format(amount)
         with self.assertRaises(ValueError) as context:
             self._converter._format_amount(debit, amount)
-        actual_message = context.exception.message
+        actual_message = exception.get_message(context.exception)
         self.assertEqual(expected_message, actual_message)
 
     def test__format_amount__debit_is_expense(self):
@@ -147,7 +151,7 @@ class TestQifConverter(unittest.TestCase):
         expected_message = "account key ({0}) does not exist".format(debit)
         with self.assertRaises(KeyError) as context:
             self._converter._format_amount(debit, amount)
-        actual_message = context.exception.message
+        actual_message = exception.get_message(context.exception)
         self.assertEqual(expected_message, actual_message)
 
     def test__format_amount__output_is_two_decimal_places(self):
@@ -196,12 +200,11 @@ class TestQifConverter(unittest.TestCase):
         Test for a date that cannot be converted to C long.
         """
         date = (9999999999,0,0,0,0,0,0,0,0)
-        expected_message = (
-            "date ({0}) cannot be converted to MM/DD/YYYY ".format(date) +
-            "because Python int too large to convert to C long")
+        expected_message = ("date ({0}) cannot be ".format(date) +
+                            "converted to MM/DD/YYYY ")
         with self.assertRaises(OverflowError) as context:
             self._converter._format_date(date)
-        actual_message = context.exception.message
+        actual_message = exception.get_message(context.exception)
         self.assertEqual(expected_message, actual_message)
 
     def test__format_date__past_date(self):
@@ -218,12 +221,11 @@ class TestQifConverter(unittest.TestCase):
         Test for a date that is invalid.
         """
         date = "invalid date type"
-        expected_message = (
-            "date ({0}) cannot be converted to MM/DD/YYYY ".format(date) +
-            "because argument must be 9-item sequence, not str")
+        expected_message = ("date ({0}) cannot be ".format(date) +
+                            "converted to MM/DD/YYYY ")
         with self.assertRaises(TypeError) as context:
             self._converter._format_date(date)
-        actual_message = context.exception.message
+        actual_message = exception.get_message(context.exception)
         self.assertEqual(expected_message, actual_message)
 
     def test__format_date__value_error(self):
@@ -231,13 +233,12 @@ class TestQifConverter(unittest.TestCase):
         Test for a date that is out of range.
         """
         date = (1000,0,0,0,0,0,0,0,0)
-        expected = (
-            "date ({0}) cannot be converted to MM/DD/YYYY ".format(date) +
-            "because year out of range")
+        expected_message = ("date ({0}) cannot be ".format(date) +
+                            "converted to MM/DD/YYYY ")
         with self.assertRaises(ValueError) as context:
             self._converter._format_date(date)
-        actual = context.exception.message
-        self.assertEqual(expected, actual)
+        actual_message = exception.get_message(context.exception)
+        self.assertEqual(expected_message, actual_message)
 
     # _get_qif_file() tests.
     def test__get_qif_file__both_have_file(self):
@@ -265,7 +266,7 @@ class TestQifConverter(unittest.TestCase):
             "has an associated QIF file")
         with self.assertRaises(KeyError) as context:
             self._converter._get_qif_file(debit, credit)
-        actual_message = context.exception.message
+        actual_message = exception.get_message(context.exception)
         self.assertEqual(expected_message, actual_message)
 
     def test__get_qif_file__debit_has_file_and_credit_has_no_file(self):
@@ -316,7 +317,7 @@ class TestQifConverter(unittest.TestCase):
             "has an associated QIF file")
         with self.assertRaises(KeyError) as context:
             self._converter._get_transfer_account(debit, credit)
-        actual_message = context.exception.message
+        actual_message = exception.get_message(context.exception)
         self.assertEqual(expected_message, actual_message)
 
     def test__get_transfer_account__debit_has_file_and_credit_has_no_file(self):
@@ -353,7 +354,7 @@ class TestQifConverter(unittest.TestCase):
             "does not have has an associated QIF account")
         with self.assertRaises(KeyError) as context:
             self._converter._get_transfer_account(debit, credit)
-        actual_message = context.exception.message
+        actual_message = exception.get_message(context.exception)
         self.assertEqual(expected_message, actual_message)
 
     # _get_transfer_account() with _get_qif_file() tests.
@@ -391,8 +392,10 @@ class TestQifConverter(unittest.TestCase):
             transactionconverter.QifConverter(
                 self._log, files, self._ACCOUNT_TYPES, self._ASSETS,
                 self._LIABILITIES, self._REVENUES, self._EXPENSES)
-        actual_message = context.exception.message
+        actual_message = exception.get_message(context.exception)
         self.assertEqual(expected_message, actual_message)
 
+
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    unittest.main()
+

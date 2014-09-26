@@ -1,6 +1,7 @@
 """Provides conversion for transaction data into an exchange format."""
 import textwrap
 import time
+from powl import exception
 
 class TransactionConverter(object):
     """
@@ -37,7 +38,7 @@ class QifConverter(TransactionConverter):
         """
         Parameters
         ----------
-        log : powl.logwriter.Log
+        log : powl.log.Log
             Used to log.
         files : dict of powl.filesystem.File
             Map of account key to files. Every key in files must exist in
@@ -59,6 +60,12 @@ class QifConverter(TransactionConverter):
         Multiple account key words can map to the same account.
         For example "ent" can map to "Expenses:Entertainment" and
         "entertainment" can also map to "Expenses:Entertainment".
+
+        Raises
+        ------
+        ValueError
+            If a key is files does not have a key in any of assets,
+            liabilities, revenues, or expenses.
         """
         self._log = log
         self._files = files
@@ -68,18 +75,18 @@ class QifConverter(TransactionConverter):
         self._revenues = revenues
         self._expenses = expenses
 
-        self._accounts = dict(
-            self._assets.items() +
-            self._liabilities.items() +
-            self._revenues.items() +
-            self._expenses.items())
+        self._accounts = dict(self._assets.items() +
+                              self._liabilities.items() +
+                              self._revenues.items() +
+                              self._expenses.items())
 
         for key, value in self._files.items():
             if key not in self._accounts.keys():
-                raise ValueError(
-                    "account key ({0}) ".format(key) +
-                    "for file ({0}) ".format(value.filename) +
-                    "does not have has an associated QIF account")
+                msg = ("account key ({0}) ".format(key) +
+                       "for file ({0}) ".format(value.filename) +
+                       "does not have has an associated QIF account")
+                err = exception.create(ValueError, msg)
+                raise err
 
     def convert(self, date, debit, credit, amount, memo):
         """
@@ -114,19 +121,12 @@ class QifConverter(TransactionConverter):
         qif_transfer = self._get_transfer_account(debit, credit)
         qif_amount = self._format_amount(debit, amount)
         qif_memo = memo
-        qif_record = self._format_qif_record(
-            qif_date,
-            qif_transfer,
-            qif_amount,
-            qif_memo)
+        qif_record = self._format_qif_record(qif_date, qif_transfer,
+                                             qif_amount, qif_memo)
         qif_file = self._get_qif_file(debit, credit)
 
-        self._log_transaction(
-            qif_date,
-            qif_file.filename,
-            qif_transfer,
-            qif_amount,
-            qif_memo)
+        self._log_transaction(qif_date, qif_file.filename, qif_transfer,
+                              qif_amount, qif_memo)
         return qif_record, qif_file
 
     def _create_qif_templates(self):
@@ -164,9 +164,10 @@ class QifConverter(TransactionConverter):
         """
         try:
             formatted_amount = "{0:.2f}".format(float(amount))
-        except ValueError:
-            raise ValueError(
-                "amount ({0}) cannot be converted to float".format(amount))
+        except ValueError as err:
+            msg = "amount ({0}) cannot be converted to float".format(amount)
+            exception.add_message(err, msg)
+            raise
 
         if debit in self._expenses:
             # Amount should be negative.
@@ -174,7 +175,9 @@ class QifConverter(TransactionConverter):
         elif debit in self._accounts:
             return formatted_amount
         else:
-            raise KeyError("account key ({0}) does not exist".format(debit))
+            msg ="account key ({0}) does not exist".format(debit)
+            err = exception.create(KeyError, msg)
+            raise err
 
     def _format_date(self, date):
         """
@@ -201,18 +204,11 @@ class QifConverter(TransactionConverter):
         """
         try:
             return time.strftime("%m/%d/%Y", date)
-        except TypeError as e:
-            raise TypeError(
-                "date ({0}) cannot be converted to MM/DD/YYYY ".format(date) +
-                "because {0}".format(e.message))
-        except ValueError as e:
-            raise ValueError(
-                "date ({0}) cannot be converted to MM/DD/YYYY ".format(date) +
-                "because {0}".format(e.message))
-        except OverflowError as e:
-            raise OverflowError(
-                "date ({0}) cannot be converted to MM/DD/YYYY ".format(date) +
-                "because {0}".format(e.message))
+        except (ValueError, TypeError, OverflowError) as err:
+            msg = ("date ({0}) cannot be converted ".format(date) +
+                   "to MM/DD/YYYY ")
+            exception.add_message(err, msg)
+            raise
 
     def _format_qif_header(self, account_name, account_type):
         """Format an account name and type into a header for a QIF file."""
@@ -280,10 +276,11 @@ class QifConverter(TransactionConverter):
         elif credit in self._files:
             return self._files[credit]
         else:
-            raise KeyError(
-                "neither debit key ({0}) ".format(debit) +
-                "or credit key ({0}) ".format(credit) +
-                "has an associated QIF file")
+            msg = ("neither debit key ({0}) ".format(debit) +
+                   "or credit key ({0}) ".format(credit) +
+                   "has an associated QIF file")
+            err = exception.create(KeyError, msg)
+            raise err
 
     def _get_transfer_account(self, debit, credit):
         """
@@ -317,17 +314,19 @@ class QifConverter(TransactionConverter):
         elif credit in self._files:
             key = debit
         else:
-            raise KeyError(
-                "neither debit key ({0}) ".format(debit) +
-                "or credit key ({0}) ".format(credit) +
-                "has an associated QIF file")
+            msg = ("neither debit key ({0}) ".format(debit) +
+                   "or credit key ({0}) ".format(credit) +
+                   "has an associated QIF file")
+            err = exception.create(KeyError, msg)
+            raise err
 
         if key in self._accounts:
             return self._accounts[key]
         else:
-            raise KeyError(
-                "account key ({0}) ".format(key) +
-                "does not have has an associated QIF account")
+            msg = ("account key ({0}) ".format(key) +
+                   "does not have has an associated QIF account")
+            err = exception.create(KeyError, msg)
+            raise err
 
     def _log_transaction(self, date, filename, transfer, amount, memo):
         """
