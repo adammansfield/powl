@@ -14,7 +14,7 @@ ACTION_MAP = {
     "n": NOTE,
     "note": NOTE,
 
-    "t": TRANSACTION,
+    "a": TRANSACTION,
     "transaction": TRANSACTION
 }
 
