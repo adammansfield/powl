@@ -1,6 +1,7 @@
 """Provides classes to perform specific actions."""
 import time
 from powl import actiontype
+from powl import log
 
 class ActionManager:
     """
@@ -45,11 +46,13 @@ class ActionManager:
         """
         try:
             action = self._action_type_to_action_map[action_type]
-        except KeyError:
-            raise KeyError(
-                "action type ({0}) is unknown".format(action_type))
+        except KeyError as e:
+            message = "action type ({}) is unknown".format(action_type)
+            log.add_error_message(e, message)
+            raise
         else:
             action.do(action_data, action_date)
+
 
 class Action(object):
     """
