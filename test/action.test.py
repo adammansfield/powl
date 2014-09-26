@@ -5,7 +5,7 @@ import time
 import unittest
 from powl import action
 from powl import actiontype
-from powl import log
+from powl import exception
 from test.mock import action as mock_action
 from test.mock import log as mock_log
 
@@ -42,7 +42,7 @@ class TestActionManager(unittest.TestCase):
         expected_message = "action type ({0}) is unknown".format(action_type)
         with self.assertRaises(KeyError) as context:
             self._action_manager.do_action(action_type, data, date)
-        actual_message = log.try_get_error_message(context.exception)
+        actual_message = exception.get_message(context.exception)
         self.assertEqual(expected_message, actual_message)
 
 if __name__ == '__main__':
