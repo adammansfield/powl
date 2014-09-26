@@ -131,3 +131,21 @@ class Log(object):
         """
         self._logger.warning(message, *args, **kwargs)
 
+
+def try_get_error_message(exception):
+    """
+    Trys to get an error message embedded in an exception.
+
+    Parameters
+    ----------
+    exception : Exception
+
+    Returns
+    -------
+    powl.log.ErrorMessage
+    """
+    messages = [m for m in exception.args if isinstance(m, ErrorMessage)]
+    if len(messages) > 0:
+        return messages[0]
+    else:
+        return ErrorMessage("")
