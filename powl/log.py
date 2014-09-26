@@ -142,10 +142,11 @@ def try_get_error_message(exception):
 
     Returns
     -------
-    powl.log.ErrorMessage
+    str
     """
     messages = [m for m in exception.args if isinstance(m, ErrorMessage)]
     if len(messages) > 0:
-        return messages[0]
+        return str(messages[0])
     else:
-        return ErrorMessage("")
+        return ""
+
