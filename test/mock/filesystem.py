@@ -1,4 +1,4 @@
-"""Provides methods for manipulating files and folders in a file system."""
+"""Provides mock objects for powl.filesystem."""
 
 
 class MockFile(object):
