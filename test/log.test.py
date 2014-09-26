@@ -16,7 +16,7 @@ class TestTryGetErrorMessage(unittest.TestCase):
         exception = Exception()
         exception.args += (message,)
         actual = log.try_get_error_message(exception)
-        self.assertEqual(message, actual)
+        self.assertEqual(str(message), actual)
 
     def test_does_not_throw_if_no_error_message(self):
         """
@@ -24,7 +24,7 @@ class TestTryGetErrorMessage(unittest.TestCase):
         """
         exception = Exception()
         actual = log.try_get_error_message(exception)
-        self.assertEqual("", str(actual))
+        self.assertEqual("", actual)
 
 if __name__ == '__main__':
     unittest.main()
