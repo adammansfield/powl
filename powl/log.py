@@ -2,6 +2,18 @@
 import logging
 import time
 
+class ErrorMessage(object):
+    """
+    Class for storing custom messages in exceptions.
+    """
+
+    def __init__(self, str):
+        self._str = str
+
+    def __str__(self):
+        return self._str
+
+
 class Log(object):
     """
     Provides methods for writing log messages of various levels to file and
