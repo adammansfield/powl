@@ -3,7 +3,7 @@
 import injector
 import unittest
 from powl import log
-from powl import powl
+from powl import app
 from test.mock import filesystem as mock_filesystem
 from test.mock import log as mock_log
 from test.mock import parser as mock_parser
