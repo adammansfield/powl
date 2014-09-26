@@ -30,8 +30,11 @@ class App:
         """
         try:
             items = self._retriever.get_action_items()
-        except Exception as e:
-            self._log.error("unexpected error: {0}".format(e))
+        except Exception as err:
+            message = exception.get_message(err)
+            traceback = traceback.format_exc()
+            log_.error(message)
+            log_.debug(traceback)
         else:
             for item, date in items:
                 try:
@@ -41,11 +44,11 @@ class App:
                     action_key, action_data = self._parser.parse(item)
                     self._action_manager.do_action(action_key, action_data,
                                                    date)
-                except (KeyError, IOError, OverflowError, TypeError,
-                        ValueError) as e:
-                    self._log.error(e)
-                except Exception as e:
-                    self._log.error("unexpected error: {0}".format(e))
+                except Exception as err:
+                    message = exception.get_message(err)
+                    traceback = traceback.format_exc()
+                    log_.error(message)
+                    log_.debug(traceback)
 
 def main(*args):
     injector = injector.Injector()
