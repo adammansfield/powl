@@ -3,22 +3,32 @@
 import unittest
 from powl import log
 
-class TestTryGetErrorMessage(unittest.TestCase):
+class TestErrorMessageFunctions(unittest.TestCase):
     """
     Class for testing get_error_message().
     """
 
-    def test_returns_error_message(self):
+    def test_sanity_with_error_message(self):
         """
-        Test to ensure it will return the message in the exception.
+        Test that added message by error message can be retrieved.
         """
-        message = log.ErrorMessage("error message")
+        error_message = log.ErrorMessage("error message")
         exception = Exception()
-        exception.args += (message,)
+        log.add_error_message(exception, error_message)
         actual = log.try_get_error_message(exception)
-        self.assertEqual(str(message), actual)
+        self.assertEqual(str(error_message), actual)
 
-    def test_does_not_throw_if_no_error_message(self):
+    def test_sanity_with_string(self):
+        """
+        Test that added message by string can be retrieved.
+        """
+        error_message = "error message"
+        exception = Exception()
+        log.add_error_message(exception, error_message)
+        actual = log.try_get_error_message(exception)
+        self.assertEqual(error_message, actual)
+
+    def test__get__does_not_throw_if_no_error_message(self):
         """
         Test to ensure that empty ErrorMessage is returned if none found.
         """

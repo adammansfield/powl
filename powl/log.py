@@ -132,6 +132,21 @@ class Log(object):
         self._logger.warning(message, *args, **kwargs)
 
 
+def add_error_message(exception, message):
+    """
+    Embeds an error message into an exception that can be retrieved by
+    try_get_error_message().
+
+    Parameters
+    ----------
+    exception : Exception
+    message : str, ErrorMessage
+    """
+    if isinstance(message, ErrorMessage):
+        exception.args += (message,)
+    else:
+        exception.args += (ErrorMessage(message),)
+
 def try_get_error_message(exception):
     """
     Trys to get an error message embedded in an exception.
