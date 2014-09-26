@@ -2,17 +2,6 @@
 import logging
 import time
 
-class ErrorMessage(object):
-    """
-    Class for storing custom messages in exceptions.
-    """
-
-    def __init__(self, str):
-        self._str = str
-
-    def __str__(self):
-        return self._str
-
 
 class Log(object):
     """
@@ -130,38 +119,4 @@ class Log(object):
             Arguments used for user defined attributes.
         """
         self._logger.warning(message, *args, **kwargs)
-
-
-def add_error_message(exception, message):
-    """
-    Embeds an error message into an exception that can be retrieved by
-    try_get_error_message().
-
-    Parameters
-    ----------
-    exception : Exception
-    message : str, ErrorMessage
-    """
-    if isinstance(message, ErrorMessage):
-        exception.args += (message,)
-    else:
-        exception.args += (ErrorMessage(message),)
-
-def try_get_error_message(exception):
-    """
-    Trys to get an error message embedded in an exception.
-
-    Parameters
-    ----------
-    exception : Exception
-
-    Returns
-    -------
-    str
-    """
-    messages = [m for m in exception.args if isinstance(m, ErrorMessage)]
-    if len(messages) > 0:
-        return str(messages[0])
-    else:
-        return ""
 
