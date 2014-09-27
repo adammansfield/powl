@@ -4,6 +4,11 @@ echo "-----------"
 python test/action.test.py
 
 echo "\n"
+echo "powl.actionretriever"
+echo "--------------------"
+python test/actionretriever.test.py
+
+echo "\n"
 echo "powl.exception"
 echo "--------------"
 python test/exception.test.py
