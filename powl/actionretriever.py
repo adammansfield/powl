@@ -5,25 +5,73 @@ import errno
 import imaplib
 import socket
 import sys
-import powl.logger as logger
+
+from powl import exception
 
 
-class Mail:
+class Mail(object):
+    pass
 
-    # EXCEPTIONS
-    class MailError(Exception): pass
-    class EmptyServer(MailError): pass
-    class EmptyAddress(MailError): pass
-    class EmptyPassword(MailError): pass
-    class ServerUnknownError(MailError): pass
-    class ServerTimedOutError(MailError): pass
-    class ServerUnreachableError(MailError): pass
-    class LoginFailure(MailError): pass
-    class MailboxSelectionError(MailError): pass
 
-    # CONSTANTS
-    _message_part = '(RFC822)'
-    _timeout = 5
+class ImapMail(Mail):
+
+    def __init__(self):
+        # TODO: move to ImapMail.
+        socket.setdefaulttimeout(self._TIMEOUT)
+
+
+class Retriever(object):
+    pass
+
+
+class MailRetriever(Retriever):
+    """
+    Provides methods for retrieving a list of actions from a mailbox.
+    """
+
+    _ERROR_EMPTY_ADDRESS = "Empty email address."
+    _ERROR_EMPTY_PASSWORD = "Empty email password."
+    _ERROR_EMPTY_SERVER = "Empty server address."
+    _ERROR_SERVER_NOT_FOUND = "{0} not found"
+    _ERROR_TIMEOUT = "{0} has timed out"
+
+    _MESSAGE_PART = '(RFC822)'
+    _TIMEOUT = 5
+
+    def __init__(self, mail, server, address, password, mailbox="inbox"):
+        """
+        Parameters
+        ----------
+        mail : powl.actionretriever.Mail
+            Interface to the mail server.
+        server : str
+            IP address of the mail server.
+        address : str
+            Email address.
+        password : str
+            Email password.
+        mailbox : str
+            Default is "inbox".
+        """
+        self._server = server
+        self._address = address
+        self._password = password
+        self._mailbox = mailbox
+
+        if not self._server:
+            msg = self._ERROR_EMPTY_SERVER
+            err = exception.create(ValueError, msg)
+            raise err
+
+        if not self._address:
+            msg = self._ERROR_EMPTY_ADDRESS
+            err = exception.create(ValueError, msg)
+            raise err
+
+        if not self._password:
+            msg = self._ERROR_EMPTY_PASSWORD
+            err = exception.create(ValueError, msg)
+            raise err
 
     # FETCHING
     def get_mail_list(self):
@@ -46,7 +94,7 @@ class Mail:
         """Return email objects fetched using the id list parameter."""
         mail_list = []
         for email_id in id_list:
-            result, response = self._imap.fetch(email_id, self._message_part)
+            result, response = self._imap.fetch(email_id, self._MESSAGE_PART)
             mail_data = response[0]
             mail_string = mail_data[1]
             mail_object = email.message_from_string(mail_string)
@@ -137,10 +185,3 @@ class Mail:
             message = self._mailbox + " is not a valid mailbox."
             raise self.MailboxSelectionError(message)
 
-    # INTIALIZATION
-    def __init__(self, server, address, password, mailbox='inbox'):
-        self._server = server
-        self._address = address
-        self._password = password
-        self._mailbox = mailbox
-        socket.setdefaulttimeout(self._timeout)
