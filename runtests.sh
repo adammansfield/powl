@@ -1,25 +1,25 @@
 #!/bin/sh
 echo "powl.action"
 echo "-----------"
-python test/action.test.py
+python test/small/action.test.py
 
 echo "\n"
 echo "powl.actionretriever"
 echo "--------------------"
-python test/actionretriever.test.py
+python test/small/actionretriever.test.py
 
 echo "\n"
 echo "powl.exception"
 echo "--------------"
-python test/exception.test.py
+python test/small/exception.test.py
 
 echo "\n"
 echo "powl.parser"
 echo "-----------"
-python test/parser.test.py
+python test/small/parser.test.py
 
 echo "\n"
 echo "powl.transactionconverter"
 echo "-------------------------"
-python test/transactionconverter.test.py
+python test/small/transactionconverter.test.py
 
