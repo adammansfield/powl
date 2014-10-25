@@ -5,40 +5,154 @@ import errno
 import imaplib
 import socket
 import sys
-
 from powl import exception
 
 
 class Mail(object):
-    pass
+
+    _ERROR_CONNECT_UNKNOWN = "unknown connect error to {0}"
+    _ERROR_INVALID_CREDENTIALS = "invalid email credentials"
+    _ERROR_NOT_CONNECTED = "not connected to mail server"
+    _ERROR_SERVER_NOT_FOUND = "{0} not found"
+    _ERROR_TIMEOUT = "{0} has timed out"
+
+    def connect(self, server):
+        """
+        Parameters
+        ----------
+        server : str
+            URL or ip address of the mail server.
+        """
+        raise NotImplementedError()
+
+    def login(self, user, password):
+        """
+        Paramaters
+        ----------
+        user : str
+            User email address.
+        password : str
+            Password for email address.
+        """
+        raise NotImplementedError()
+
+    def get_message_id_list(self):
+        """
+        Returns
+        -------
+        list of str
+            IDs that can be used to get the messages.
+        """
+        raise NotImplementedError()
+
+    def get_message_and_date(self, message_id):
+        """
+        Parameters
+        ----------
+        message_id : str
+
+        Returns
+        -------
+        tuple of str, time.struct_time
+            The str is the body of the message.
+            The time.struct_time is the date of the message.
+        """
+        raise NotImplementedError()
 
 
 class ImapMail(Mail):
 
-    def __init__(self):
-        # TODO: move to ImapMail.
-        socket.setdefaulttimeout(self._TIMEOUT)
+    _ERROR_INVALID_MAILBOX = "{0} is an invalid mailbox folder"
+
+    def __init__(self, mailbox="inbox", timeout=5):
+        """
+        Parameters
+        ----------
+        mailbox : str
+            Default is "inbox".
+        """
+        self._mailbox = mailbox
+        self._timeout = timeout
+
+        self._imap = None
+        socket.setdefaulttimeout(self._timeout)
+
+    def connect(self, server):
+        try:
+            self._imap = imaplib.IMAP4_SSL(server)
+        except socket.timeout as err:
+            msg = self._ERROR_TIMEOUT.format(server)
+            exception.add_message(err, msg)
+            raise
+        except IOError as err:
+            if err.errno == socket.EAI_NONAME:
+                msg = self._ERROR_SERVER_NOT_FOUND.format(self._server)
+            elif err.errno == socket.ENETUNREACH:
+                msg = self._ERROR_SERVER_NOT_FOUND.format(self._server)
+            else:
+                msg = self._ERROR_CONNECT_UNKNOWN.format(self._server)
+            exception.add_message(err, msg)
+            raise
+
+    def login(self, user, password):
+        if not self._imap:
+            msg = self._ERROR_NOT_CONNECTED
+            err = exception.create(ValueError, msg)
+            raise err
+        try:
+            self._imap.login(user, password)
+        except imaplib.IMAP4.error as err:
+            if "Invalid credentials" in str(e):
+                msg = self._ERROR_INVALID_CREDENTIAL
+                exception.add_message(err, msg)
+                raise
+        self._select_mailbox()
+
+    def get_message_id_list(self):
+        if not self._imap:
+            msg = self._ERROR_NOT_CONNECTED
+            err = exception.create(ValueError, msg)
+            raise err
+
+    def _select_mailbox(self):
+        """
+        Select a mailbox folder.
+        """
+        result, response = self._imap.select(self._mailbox)
+        if result == "NO":
+            msg = self._ERROR_INVALID_MAILBOX.format(self._mailbox)
+            err = exception.create(ValueError, msg)
+            raise err
 
 
-class Retriever(object):
-    pass
+class ActionItemRetriever(object):
+    """
+    Provides methods for retrieving a list of action items.
+    """
+
+    def get_action_items(self):
+        """
+        Get and return a list of action items.
+
+        Returns
+        -------
+        list of (str, time.struct_time)
+        """
+        pass
 
 
-class MailRetriever(Retriever):
+class MailRetriever(ActionItemRetriever):
     """
     Provides methods for retrieving a list of actions from a mailbox.
     """
 
-    _ERROR_EMPTY_ADDRESS = "Empty email address."
+    _ERROR_EMPTY_USER = "Empty email address."
     _ERROR_EMPTY_PASSWORD = "Empty email password."
     _ERROR_EMPTY_SERVER = "Empty server address."
-    _ERROR_SERVER_NOT_FOUND = "{0} not found"
-    _ERROR_TIMEOUT = "{0} has timed out"
 
     _MESSAGE_PART = '(RFC822)'
-    _TIMEOUT = 5
 
-    def __init__(self, mail, server, address, password, mailbox="inbox"):
+    def __init__(self, mail, server, user, password):
         """
         Parameters
         ----------
@@ -46,25 +160,23 @@ class MailRetriever(Retriever):
             Interface to the mail server.
         server : str
             IP address of the mail server.
-        address : str
+        user : str
             Email address.
         password : str
             Email password.
-        mailbox : str
-            Default is "inbox".
         """
+        self._mail = mail
         self._server = server
-        self._address = address
+        self._user = user
         self._password = password
-        self._mailbox = mailbox
 
         if not self._server:
             msg = self._ERROR_EMPTY_SERVER
             err = exception.create(ValueError, msg)
             raise err
 
-        if not self._address:
-            msg = self._ERROR_EMPTY_ADDRESS
+        if not self._user:
+            msg = self._ERROR_EMPTY_USER
             err = exception.create(ValueError, msg)
             raise err
 
@@ -73,9 +185,35 @@ class MailRetriever(Retriever):
             err = exception.create(ValueError, msg)
             raise err
 
-    # FETCHING
-    def get_mail_list(self):
-        """Get a list of tuples of unread email messages and their dates."""
+    def get_action_items(self):
+        """
+        Return a list of action items retrieved from a mail box.
+        """
+        try:
+            self._mail.connect(self._server)
+        except socket.timeout as err:
+            msg = self._ERROR_TIMEOUT.format(self._server)
+            exception.add_message(err, msg)
+            raise
+        except IOError as err:
+            if err.errno == socket.EAI_NONAME:
+                msg = self._ERROR_SERVER_NOT_FOUND.format(self._server)
+            elif err.errno == socket.ENETUNREACH:
+                msg = self._ERROR_SERVER_NOT_FOUND.format(self._server)
+            else:
+                msg = self._ERROR_CONNECT_UNKNOWN.format(self._server)
+            exception.add_message(err, msg)
+            raise
+
+        self._mail.login(self._user, self._password)
+
+        message_id_list = self._mail.get_message_id_list()
+
+        for message_id in message_id_list:
+            message = self._mail.get_message(message_id)
+
+
+
         id_list = self._get_email_ids()
         mail_list = self._fetch_emails(id_list)
         message_list = self._parse_email_messages(mail_list)
@@ -110,7 +248,6 @@ class MailRetriever(Retriever):
                 if part.get_content_type() == 'text/html':
                     body = part.get_payload()
                     message = self._strip_message_markup(body).strip()
-                    logger.debug('EMAIL   %s', message)
                     message_list.append(message)
         return message_list
 
@@ -131,36 +268,6 @@ class MailRetriever(Retriever):
         retval = retval.replace('&amp;','&')
         return retval
 
-    # IMAP SETUP
-    def setup(self):
-        """Get imap server, login and select mailbox."""
-        try:
-            self._get_imap()
-            self._login()
-            self._select_mailbox()
-        except Mail.MailError as e:
-            logger.error(e)
-            sys.exit(e)
-
-    def _get_imap(self):
-        """Attempt to get imap object."""
-        if not self._server:
-            raise self.EmptyServer("Imap server has not been set.")
-        else:
-            try:
-                self._imap = imaplib.IMAP4_SSL(self._server)
-            except socket.gaierror as (code, message):
-                if code == socket.EAI_NONAME:
-                    message = self._server + " not found."
-                    raise self.ServerUnknownError(message)
-            except socket.error as (code, message):
-                if code == errno.ENETUNREACH:
-                    message = self._server + " not found."
-                    raise self.ServerUnreachableError(message)
-            except socket.timeout:
-                message = self._server + " has timed out."
-                raise self.ServerTimedOutError(message)
-
     def _login(self):
         """Login to imap server and select mailbox."""
         if not self._address:
@@ -177,11 +284,4 @@ class MailRetriever(Retriever):
                                                                  self._password)
                     )
                     raise self.LoginFailure(message)
-
-    def _select_mailbox(self):
-        """Select a mailbox from the imap object."""
-        result, response = self._imap.select(self._mailbox)
-        if "NO" in response:
-            message = self._mailbox + " is not a valid mailbox."
-            raise self.MailboxSelectionError(message)
 
