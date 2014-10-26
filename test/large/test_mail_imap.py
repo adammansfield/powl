@@ -2,8 +2,8 @@
 import copy
 import time
 import unittest
-from powl import actionretriever
 from powl import exception
+from powl import mail
 
 try:
     from test.config import imapconfig
@@ -84,7 +84,7 @@ class ImapMailTest(unittest.TestCase):
         """
         simple_messages = []
         for message in messages:
-            message_helper = actionretriever.MessageHelper(message)
+            message_helper = mail.MessageHelper(message)
             struct_time = message_helper.get_date()
 
             body = message_helper.get_body()
@@ -109,7 +109,7 @@ class ImapMailTest(unittest.TestCase):
         return simple_messages
 
     def setUp(self):
-        self._imap = actionretriever.ImapMail(imapconfig.mailbox,
+        self._imap = mail.ImapMail(imapconfig.mailbox,
                                               imapconfig.timeout)
 
     def test__connect__server_not_found(self):
@@ -171,7 +171,7 @@ class ImapMailTest(unittest.TestCase):
         Test that login throws if it selects an invalid mailbox.
         """
         mailbox = "invaild_mailbox"
-        imap = actionretriever.ImapMail(mailbox, imapconfig.timeout)
+        imap = mail.ImapMail(mailbox, imapconfig.timeout)
         imap.connect(imapconfig.server)
         with self.assertRaises(ValueError) as context:
             imap.login(imapconfig.user, imapconfig.password)
@@ -227,8 +227,9 @@ class ImapMailTest(unittest.TestCase):
         expected_tuples = imapconfig.expected_emails
         expected_simple_messages = self._from_tuples(expected_tuples)
 
-        self.assertEqual(len(expected_simple_messages),
-                         len(actual_simple_messages))
+        num_actual_msgs = len(expected_simple_messages)
+        num_expected_msgs = len(actual_simple_messages)
+        self.assertEqual(num_expected_msgs, num_actual_msgs)
 
         expected_simple_messages.sort(key=lambda x: x.date)
         actual_simple_messages.sort(key=lambda x: x.date)
