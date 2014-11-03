@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import copy
 import time
 import unittest
 from powl import exception
@@ -45,131 +44,81 @@ except ImportError:
     raise SystemExit("Need to fill out test/config/imapconfig.py")
 
 
-class _SimpleMessage(object):
-    """
-    A simplified email.message.Message object.
-    """
-
-    def __init__(self):
-        self.body = None
-        self.date = None
-
-    def __eq__(self, other):
-        # For debugging purposes.
-        if self.body != other.body:
-            print
-            print repr(self) + " != " + repr(other)
-            print "  self.body != other.body"
-            print "  " + self.body + " != " + other.body
-            return False
-
-        if self.date != other.date:
-            print
-            print repr(self) + " != " + repr(other)
-            print "  self.date != other.date"
-            print "  " + self.date + " != " + other.date
-            return False
-
-        return True
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-
 class ImapMailTest(unittest.TestCase):
-
-    def _from_messages(self, messages):
-        """
-        Returns a list _SimpleMessage from email.message.Message.
-        """
-        simple_messages = []
-        for message in messages:
-            message_helper = mail.MessageHelper(message)
-            struct_time = message_helper.get_date()
-
-            body = message_helper.get_body()
-            date = time.strftime("%Y-%m-%dT%H:%M", struct_time)
-
-            simple_message = _SimpleMessage()
-            simple_message.body = body
-            simple_message.date = date
-            simple_messages.append(simple_message)
-        return simple_messages
-
-    def _from_tuples(self, tuples):
-        """
-        Returns a list _SimpleMessage from list of (date, body).
-        """
-        simple_messages = []
-        for date, body in tuples:
-            simple_message = _SimpleMessage()
-            simple_message.body = body
-            simple_message.date = date
-            simple_messages.append(simple_message)
-        return simple_messages
 
     def setUp(self):
         self._imap = mail.ImapMail(imapconfig.mailbox,
                                               imapconfig.timeout)
 
+    def test__connect__empty_server(self):
+        server = ""
+        with self.assertRaises(ValueError) as context:
+            self._imap.connect(server)
+
+        actual_errmsg = exception.get_message(context.exception)
+        expected_errmsg = mail._ERRMSG_EMPTY_SERVER
+        self.assertEqual(expected_errmsg, actual_errmsg)
+
     def test__connect__server_not_found(self):
-        """
-        Test that connect throws if server not found.
-        """
         server = "non-existant server"
         with self.assertRaises(IOError) as context:
             self._imap.connect(server)
 
         actual_errmsg = exception.get_message(context.exception)
-        expected_errmsg = self._imap._ERRMSG_SERVER_NOT_FOUND.format(
+        expected_errmsg = mail._ERRMSG_SERVER_NOT_FOUND.format(
             server)
         self.assertEqual(expected_errmsg, actual_errmsg)
 
-    def test__connect__success(self):
-        """
-        Test that IMAP object successfully connects to server.
-        """
+    def test__connect__successfully(self):
         self._imap.connect(imapconfig.server)
 
     def test__connect__timeout(self):
-        """
-        Test that connect throws if server connection has timed out.
-        """
         with self.assertRaises(IOError) as context:
             self._imap.connect(imapconfig.not_imap_server)
 
         actual_errmsg = exception.get_message(context.exception)
-        expected_errmsg = self._imap._ERRMSG_TIMEOUT.format(
+        expected_errmsg = mail._ERRMSG_TIMEOUT.format(
             imapconfig.not_imap_server)
         self.assertEqual(expected_errmsg, actual_errmsg)
 
-    def test__login__called_before_connect(self):
-        """
-        Test that login throws if called before connect.
-        """
+    def test__login__called_before_connect_fails(self):
         with self.assertRaises(ValueError) as context:
             self._imap.login(imapconfig.user, imapconfig.password)
 
         actual_errmsg = exception.get_message(context.exception)
-        expected_errmsg = self._imap._ERRMSG_NOT_CONNECTED
+        expected_errmsg = mail._ERRMSG_NOT_CONNECTED
+        self.assertEqual(expected_errmsg, actual_errmsg)
+
+    def test__login__empty_password(self):
+        self._imap.connect(imapconfig.server)
+
+        with self.assertRaises(ValueError) as context:
+            self._imap.login(user="user", password="")
+
+        actual_errmsg = exception.get_message(context.exception)
+        expected_errmsg = mail._ERRMSG_EMPTY_PASSWORD
+        self.assertEqual(expected_errmsg, actual_errmsg)
+
+    def test__login__empty_user(self):
+        self._imap.connect(imapconfig.server)
+
+        with self.assertRaises(ValueError) as context:
+            self._imap.login(user="", password="password")
+
+        actual_errmsg = exception.get_message(context.exception)
+        expected_errmsg = mail._ERRMSG_EMPTY_USER
         self.assertEqual(expected_errmsg, actual_errmsg)
 
     def test__login__invalid_credentials(self):
-        """
-        Test that login throws if invalid email and password are given.
-        """
         self._imap.connect(imapconfig.server)
         with self.assertRaises(Exception) as context:
             self._imap.login("invaliduser", "invalidpassword")
 
         actual_errmsg = exception.get_message(context.exception)
-        expected_errmsg = self._imap._ERRMSG_INVALID_CREDENTIALS
+        expected_errmsg = mail._ERRMSG_INVALID_CREDENTIALS
         self.assertEqual(expected_errmsg, actual_errmsg)
 
     def test__login__invalid_mailbox(self):
-        """
-        Test that login throws if it selects an invalid mailbox.
-        """
         mailbox = "invaild_mailbox"
         imap = mail.ImapMail(mailbox, imapconfig.timeout)
         imap.connect(imapconfig.server)
@@ -177,66 +126,52 @@ class ImapMailTest(unittest.TestCase):
             imap.login(imapconfig.user, imapconfig.password)
 
         actual_errmsg = exception.get_message(context.exception)
-        expected_errmsg = self._imap._ERRMSG_INVALID_MAILBOX.format(
+        expected_errmsg = mail._ERRMSG_INVALID_MAILBOX.format(
             mailbox)
         self.assertEqual(expected_errmsg, actual_errmsg)
 
-    def test__login__success(self):
-        """
-        Test that login with valid credentials is successful.
-        """
+    def test__login__successfully(self):
         self._imap.connect(imapconfig.server)
         self._imap.login(imapconfig.user, imapconfig.password)
 
-    def test__get_messages__called_before_connect(self):
-        """
-        Test that get_messages() throws if called before connect.
-        """
+    def test__get_messages__called_before_connect_fails(self):
         with self.assertRaises(ValueError) as context:
             self._imap.get_messages()
 
         actual_errmsg = exception.get_message(context.exception)
-        expected_errmsg = self._imap._ERRMSG_NOT_CONNECTED
+        expected_errmsg = mail._ERRMSG_NOT_CONNECTED
         self.assertEqual(expected_errmsg, actual_errmsg)
 
-    def test__get_messages__called_before_login(self):
-        """
-        Test that get_messages() throws if called before login.
-        """
+    def test__get_messages__called_before_login_fails(self):
         self._imap.connect(imapconfig.server)
 
         with self.assertRaises(ValueError) as context:
             self._imap.get_messages()
 
         actual_errmsg = exception.get_message(context.exception)
-        expected_errmsg = self._imap._ERRMSG_NOT_LOGGED_IN
+        expected_errmsg = mail._ERRMSG_NOT_LOGGED_IN
         self.assertEqual(expected_errmsg, actual_errmsg)
 
-    def test__get_messages__success(self):
+    def test__get_messages__successfully(self):
         """
-        Test we are able to get a message and its date.
-        This assumes that there is only two unread emails on the server
-        in the mailbox specified.
+        This assumes that there is unread emails on the server
+        that match what is specified in the imapconfig.
         """
         self._imap.connect(imapconfig.server)
         self._imap.login(imapconfig.user, imapconfig.password)
-
         actual_messages = self._imap.get_messages()
-        actual_simple_messages = self._from_messages(actual_messages)
 
         expected_tuples = imapconfig.expected_emails
-        expected_simple_messages = self._from_tuples(expected_tuples)
+        self.assertEqual(len(expected_tuples), len(actual_messages))
 
-        num_actual_msgs = len(expected_simple_messages)
-        num_expected_msgs = len(actual_simple_messages)
-        self.assertEqual(num_expected_msgs, num_actual_msgs)
+        expected_tuples.sort(key=lambda x: x[0])
+        actual_messages.sort(key=lambda x: x.date)
 
-        expected_simple_messages.sort(key=lambda x: x.date)
-        actual_simple_messages.sort(key=lambda x: x.date)
-
-        combined_list = zip(expected_simple_messages, actual_simple_messages)
+        combined_list = zip(expected_tuples, actual_messages)
         for expected, actual in combined_list:
-            self.assertEqual(expected, actual)
+            actual_date_iso8601 = time.strftime("%Y-%m-%dT%H:%M", actual.date)
+            self.assertEqual(expected[0], actual_date_iso8601)
+            self.assertEqual(expected[1], actual.body)
 
 
 if __name__ == '__main__':

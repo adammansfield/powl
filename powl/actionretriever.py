@@ -24,17 +24,13 @@ class MailRetriever(ActionItemRetriever):
     Provides methods for retrieving a list of actions from a mailbox.
     """
 
-    _ERRMSG_EMPTY_USER = "Empty email address."
-    _ERRMSG_EMPTY_PASSWORD = "Empty email password."
-    _ERRMSG_EMPTY_SERVER = "Empty server address."
-
     _MESSAGE_PART = '(RFC822)'
 
     def __init__(self, mail, server, user, password):
         """
         Parameters
         ----------
-        mail : powl.actionretriever.Mail
+        mail : powl.mail.Mail
             Interface to the mail server.
         server : str
             IP address of the mail server.
@@ -47,21 +43,6 @@ class MailRetriever(ActionItemRetriever):
         self._server = server
         self._user = user
         self._password = password
-
-        if not self._server:
-            msg = self._ERRMSG_EMPTY_SERVER
-            err = exception.create(ValueError, msg)
-            raise err
-
-        if not self._user:
-            msg = self._ERRMSG_EMPTY_USER
-            err = exception.create(ValueError, msg)
-            raise err
-
-        if not self._password:
-            msg = self._ERRMSG_EMPTY_PASSWORD
-            err = exception.create(ValueError, msg)
-            raise err
 
     def _convert_message_to_action_item(self, message):
         """

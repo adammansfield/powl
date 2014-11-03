@@ -4,9 +4,26 @@ import imaplib
 import socket
 from powl import exception
 
-class MessageHelper(object):
+_ERRMSG_CONNECT_UNKNOWN = "unknown connect error to {0}"
+_ERRMSG_EMPTY_USER = "empty email address"
+_ERRMSG_EMPTY_PASSWORD = "empty email password"
+_ERRMSG_EMPTY_SERVER = "empty server address"
+_ERRMSG_INVALID_CREDENTIALS = "invalid email credentials"
+_ERRMSG_INVALID_MAILBOX = "{0} is an invalid mailbox folder"
+_ERRMSG_NOT_CONNECTED = "not connected to mail server"
+_ERRMSG_NOT_LOGGED_IN = "not logged in to mail server"
+_ERRMSG_SERVER_NOT_FOUND = "{0} not found"
+_ERRMSG_TIMEOUT = "{0} has timed out"
+
+class MailMessage(object):
     """
-    Provides methods for extracting data from email.message.Message.
+    Abstracts email.message.Message.
+
+    Properties
+    ----------
+    body : str
+    date : time.struct_time
+    message : email.message.Message
     """
 
     def __init__(self, message):
@@ -17,56 +34,29 @@ class MessageHelper(object):
         """
         self._message = message
 
-    def _strip_markup(self, string):
-        """
-        Return string stripped of markup and surrounding whitespace.
-        """
-        retval = string.replace('<P>','')
-        retval = retval.replace('</P>','')
-        retval = retval.replace('=0A',' ')
-        retval = retval.replace('&amp;','&')
-        retval = retval.strip()
-        return retval
-
-    def get_body(self):
-        """
-        Return the body of the given email.
-
-        Returns
-        -------
-        str
-        """
-        raw_body = ""
+    @property
+    def body(self):
+        body = ""
         for part in self._message.walk():
             if part.get_content_type() == 'text/plain':
-                raw_body = part.get_payload()
-        body = self._strip_markup(raw_body)
-        return body
+                body = part.get_payload()
+        return body.strip()
 
-    def get_date(self):
-        """
-        Return the date of the given emai.
-
-        Returns
-        -------
-        time.struct_time
-        """
+    @property
+    def date(self):
         date_string = self._message["Date"]
         date = email.utils.parsedate(date_string)
         return date
+
+    @property
+    def message(self):
+        return self._message
 
 
 class Mail(object):
     """
     Provides methods for retrieving messages from mail servers.
     """
-
-    _ERRMSG_CONNECT_UNKNOWN = "unknown connect error to {0}"
-    _ERRMSG_INVALID_CREDENTIALS = "invalid email credentials"
-    _ERRMSG_NOT_CONNECTED = "not connected to mail server"
-    _ERRMSG_NOT_LOGGED_IN = "not logged in to mail server"
-    _ERRMSG_SERVER_NOT_FOUND = "{0} not found"
-    _ERRMSG_TIMEOUT = "{0} has timed out"
 
     def connect(self, server):
         """
@@ -85,7 +75,7 @@ class Mail(object):
 
         Returns
         -------
-        list of email.message.Message
+        list of powl.mail.MailMessage
         """
         raise NotImplementedError()
 
@@ -107,8 +97,6 @@ class ImapMail(Mail):
     """
     Implements Mail using imaplib.IMAP4_SSL.
     """
-
-    _ERRMSG_INVALID_MAILBOX = "{0} is an invalid mailbox folder"
 
     _MESSAGE_PART = "(RFC822)"
 
@@ -140,8 +128,8 @@ class ImapMail(Mail):
         Raise exception if not connected to IMAP server.
         """
         if not self._imap:
-            msg = self._ERRMSG_NOT_CONNECTED
-            err = exception.create(ValueError, msg)
+            errmsg = _ERRMSG_NOT_CONNECTED
+            err = exception.create(ValueError, errmsg)
             raise err
 
     def _assert_logged_in(self):
@@ -149,8 +137,15 @@ class ImapMail(Mail):
         Raise exception if not logged in to IMAP server.
         """
         if not self._logged_in:
-            msg = self._ERRMSG_NOT_LOGGED_IN
-            err = exception.create(ValueError, msg)
+            errmsg = _ERRMSG_NOT_LOGGED_IN
+            err = exception.create(ValueError, errmsg)
+            raise err
+
+    def _assert_not_empty(self, value, errmsg):
+        """
+        """
+        if not value:
+            err = exception.create(ValueError, errmsg)
             raise err
 
     def _get_message_ids(self):
@@ -164,13 +159,14 @@ class ImapMail(Mail):
 
     def _get_messages(self, message_ids):
         """
-        Return all email.message.Message fetched using the given id list.
+        Return all powl.mail.MailMessage fetched using the given id list.
         """
         messages = []
         for message_id in message_ids:
             result, response = self._imap.fetch(message_id, self._MESSAGE_PART)
-            message_string = response[0][1]
-            message = email.message_from_string(message_string)
+            email_message_string = response[0][1]
+            email_message = email.message_from_string(email_message_string)
+            message = MailMessage(email_message)
             messages.append(message)
         return messages
 
@@ -180,26 +176,28 @@ class ImapMail(Mail):
         """
         result, response = self._imap.select(self._mailbox)
         if result == "NO":
-            msg = self._ERRMSG_INVALID_MAILBOX.format(self._mailbox)
-            err = exception.create(ValueError, msg)
+            errmsg = _ERRMSG_INVALID_MAILBOX.format(self._mailbox)
+            err = exception.create(ValueError, errmsg)
             raise err
 
     # powl.actionretriever.Mail methods.
     def connect(self, server):
+        self._assert_not_empty(server, _ERRMSG_EMPTY_SERVER)
+
         try:
             self._imap = imaplib.IMAP4_SSL(server)
         except socket.timeout as err:
-            msg = self._ERRMSG_TIMEOUT.format(server)
-            exception.add_message(err, msg)
+            errmsg = _ERRMSG_TIMEOUT.format(server)
+            exception.add_message(err, errmsg)
             raise
         except IOError as err:
             if err.errno == socket.EAI_NONAME:
-                msg = self._ERRMSG_SERVER_NOT_FOUND.format(server)
+                errmsg = _ERRMSG_SERVER_NOT_FOUND.format(server)
             elif err.errno == socket.errno.ENETUNREACH:
-                msg = self._ERRMSG_SERVER_NOT_FOUND.format(server)
+                errmsg = _ERRMSG_SERVER_NOT_FOUND.format(server)
             else:
-                msg = self._ERRMSG_CONNECT_UNKNOWN.format(server)
-            exception.add_message(err, msg)
+                errmsg = _ERRMSG_CONNECT_UNKNOWN.format(server)
+            exception.add_message(err, errmsg)
             raise
 
     def get_messages(self):
@@ -213,14 +211,16 @@ class ImapMail(Mail):
 
     def login(self, user, password):
         self._assert_connected()
+        self._assert_not_empty(user, _ERRMSG_EMPTY_USER)
+        self._assert_not_empty(password, _ERRMSG_EMPTY_PASSWORD)
 
         try:
             self._imap.login(user, password)
         except imaplib.IMAP4.error as err:
             if ("Invalid credentials" in str(err) or
                     "AUTHENTICATIONFAILED" in str(err)):
-                msg = self._ERRMSG_INVALID_CREDENTIALS
-                exception.add_message(err, msg)
+                errmsg = _ERRMSG_INVALID_CREDENTIALS
+                exception.add_message(err, errmsg)
             raise
 
         self._select_mailbox()
